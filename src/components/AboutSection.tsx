@@ -4,7 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { AcademicCapIcon, CurrencyDollarIcon, ArrowPathIcon, UsersIcon } from '@heroicons/react/24/outline';
-import { EyeIcon, HeartIcon, LightBulbIcon, StarIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, HeartIcon, StarIcon } from '@heroicons/react/24/outline';
 
 export default function AboutSection() {
   const { t } = useLanguage();

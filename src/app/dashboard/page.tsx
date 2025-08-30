@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useUser } from "@stackframe/stack";
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
@@ -21,9 +20,9 @@ import {
 } from '@heroicons/react/24/outline';
 
 export default function AdminDashboard() {
-  const { t } = useLanguage();
+  const { } = useLanguage();
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{fullName?: string; email: string} | null>(null);
   const [activeSection, setActiveSection] = useState('overview');
 
   // Check authentication

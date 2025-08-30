@@ -76,9 +76,10 @@ export default function ImpactSection() {
     },
   ];
 
-  const [educationalContent, setEducationalContent] = useState<any[]>([]);
+  const [educationalContent, setEducationalContent] = useState<{id: number; title: string; description: string; category: string; categoryColor: string; duration: string; participants: number; icon: any; image: string}[]>([]);
 
   useEffect(() => {
+
     const fetchEducationalContent = async () => {
       try {
         const response = await fetch('/api/educational-content');
@@ -119,6 +120,16 @@ export default function ImpactSection() {
 
     fetchEducationalContent();
   }, []);
+
+  const handleCategoryFilter = (category: string) => {
+    const colors: { [key: string]: string } = {
+      'Biashara': 'bg-blue-100 text-blue-800',
+      'Uongozi': 'bg-green-100 text-green-800',
+      'Fedha': 'bg-orange-100 text-orange-800',
+      'Teknolojia': 'bg-purple-100 text-purple-800'
+    };
+    return colors[category] || 'bg-gray-100 text-gray-800';
+  };
 
   const getCategoryColor = (category: string) => {
     const colors: { [key: string]: string } = {

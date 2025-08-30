@@ -15,9 +15,9 @@ import {
 } from '@heroicons/react/24/outline';
 
 export default function MemberPortal() {
-  const { t } = useLanguage();
+  const { } = useLanguage();
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{fullName?: string; email: string} | null>(null);
   const [activeTab, setActiveTab] = useState('profile');
 
   useEffect(() => {
@@ -78,7 +78,7 @@ export default function MemberPortal() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">JUKUMU Portal</h1>
-                <p className="text-sm text-gray-600">Karibu, {user.name}</p>
+                <p className="text-sm text-gray-600">Karibu, {user.fullName || user.email}</p>
               </div>
             </div>
             <button

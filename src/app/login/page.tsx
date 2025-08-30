@@ -8,9 +8,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
 export default function LoginPage() {
-  const { t } = useLanguage();
+  const { } = useLanguage();
   const router = useRouter();
-  const stackApp = useStackApp();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -50,10 +49,10 @@ export default function LoginPage() {
         localStorage.setItem('user', JSON.stringify(data.user));
         router.push('/dashboard');
       } else {
-        const errorData = await response.json();
+        await response.json();
         setError('Barua pepe au nywila si sahihi. Hakikisha umesajili kwanza.');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Login error:', error);
       setError('Hitilafu imetokea. Jaribu tena.');
     } finally {

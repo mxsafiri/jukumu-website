@@ -98,9 +98,9 @@ export default function RegistrationSection() {
         setError('Usajili umekamilika lakini kuna tatizo la kuingia. Jaribu kuingia kwa kutumia barua pepe na nywila uliyoweka.');
         setIsSubmitted(true);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Registration error:', error);
-      setError(error.message || 'Hitilafu imetokea. Jaribu tena.');
+      setError(error instanceof Error ? error.message : 'Hitilafu imetokea. Jaribu tena.');
     } finally {
       setIsSubmitting(false);
     }
