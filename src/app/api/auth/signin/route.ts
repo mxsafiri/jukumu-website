@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     // Find user
     const client = await pool.connect();
     const result = await client.query(
-      'SELECT id, email, password, full_name, role FROM users WHERE email = $1',
+      'SELECT id, email, password_hash, full_name, role FROM users WHERE email = $1',
       [email]
     );
 
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     client.release();
 
     // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    const isValidPassword = await bcrypt.compare(password, user.password_hash);
     if (!isValidPassword) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }

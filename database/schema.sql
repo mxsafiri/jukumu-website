@@ -1,6 +1,17 @@
 -- JUKUMU Fund Database Schema
 
 -- Users table (for authentication)
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    full_name VARCHAR(255) NOT NULL,
+    role VARCHAR(50) DEFAULT 'member' CHECK (role IN ('admin', 'member')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Members table (business profile information)
 CREATE TABLE members (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id),
@@ -166,7 +177,7 @@ CREATE TABLE system_settings (
 );
 
 -- Insert default admin user (password: admin123)
-INSERT INTO users (email, password_hash, full_name, role) VALUES
+INSERT INTO users (email, password, full_name, role) VALUES
 ('admin@jukumu.co.tz', '$2b$10$rQZ8kqH9mV7nF2pL3wX8.eK5mN9oP1qR2sT3uV4wX5yZ6aB7cD8eF', 'JUKUMU Admin', 'admin');
 
 -- Insert sample educational content

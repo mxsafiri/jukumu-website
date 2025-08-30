@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
 
     // Create user
     const result = await client.query(
-      'INSERT INTO users (email, password, full_name, role) VALUES ($1, $2, $3, $4) RETURNING id, email, full_name, role',
+      'INSERT INTO users (email, password_hash, full_name, role) VALUES ($1, $2, $3, $4) RETURNING id, email, full_name, role',
       [email, hashedPassword, fullName, 'member']
     );
 
