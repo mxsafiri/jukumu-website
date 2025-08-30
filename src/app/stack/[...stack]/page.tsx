@@ -1,10 +1,18 @@
-import { StackHandler } from "@stackframe/stack";
-import { stackServerApp } from "@/lib/stack";
-
-export default function Handler(props: {params: Promise<{stack: string[]}>}) {
-  return <StackHandler fullPage app={stackServerApp} {...props} />;
+// Stack Auth handler removed - using custom JWT authentication
+export default function Handler() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold text-gray-900">Authentication</h1>
+        <p className="text-gray-600">Please use the login page to access your account.</p>
+      </div>
+    </div>
+  );
 }
 
 export function generateMetadata() {
-  return stackServerApp.urls;
+  return {
+    title: 'Authentication - Jukumu',
+    description: 'Authentication page for Jukumu web portal'
+  };
 }

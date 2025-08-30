@@ -3,12 +3,10 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useStackApp } from "@stackframe/stack";
 import { UserPlusIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 
 export default function RegistrationSection() {
   const { t } = useLanguage();
-  const stackApp = useStackApp();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
