@@ -22,18 +22,87 @@ import {
 export default function AdminDashboard() {
   const { } = useLanguage();
   const router = useRouter();
-  const [user, setUser] = useState<{fullName?: string; email: string} | null>(null);
+  const [user, setUser] = useState<{id?: number; fullName?: string; email: string; role?: string} | null>(null);
   const [activeSection, setActiveSection] = useState('overview');
+  const [adminStats, setAdminStats] = useState<any>(null);
+  const [members, setMembers] = useState<any[]>([]);
+  const [groups, setGroups] = useState<any[]>([]);
+  const [investments, setInvestments] = useState<any[]>([]);
+  const [educationalContent, setEducationalContent] = useState<any[]>([]);
+  const [recentActivities, setRecentActivities] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Check authentication
+  // Check authentication and load admin data
   useEffect(() => {
     const userData = localStorage.getItem('user');
     if (userData) {
-      setUser(JSON.parse(userData));
+      const parsedUser = JSON.parse(userData);
+      setUser(parsedUser);
+      
+      // Redirect members to member dashboard
+      if (parsedUser.role === 'member') {
+        router.push('/member-dashboard');
+        return;
+      }
+      
+      // Load admin data
+      loadAdminData();
     } else {
       router.push('/login');
     }
   }, [router]);
+
+  const loadAdminData = async () => {
+    try {
+      setLoading(true);
+      
+      // Load admin statistics
+      const statsResponse = await fetch('/api/admin/stats');
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json();
+        setAdminStats(statsData);
+      }
+      
+      // Load members
+      const membersResponse = await fetch('/api/admin/members');
+      if (membersResponse.ok) {
+        const membersData = await membersResponse.json();
+        setMembers(membersData);
+      }
+      
+      // Load groups
+      const groupsResponse = await fetch('/api/admin/groups');
+      if (groupsResponse.ok) {
+        const groupsData = await groupsResponse.json();
+        setGroups(groupsData);
+      }
+      
+      // Load investments
+      const investmentsResponse = await fetch('/api/admin/investments');
+      if (investmentsResponse.ok) {
+        const investmentsData = await investmentsResponse.json();
+        setInvestments(investmentsData);
+      }
+      
+      // Load educational content
+      const contentResponse = await fetch('/api/educational-content?includeUnpublished=true');
+      if (contentResponse.ok) {
+        const contentData = await contentResponse.json();
+        setEducationalContent(contentData);
+      }
+      
+      // Load recent activities
+      const activitiesResponse = await fetch('/api/admin/activities');
+      if (activitiesResponse.ok) {
+        const activitiesData = await activitiesResponse.json();
+        setRecentActivities(activitiesData);
+      }
+    } catch (error) {
+      console.error('Error loading admin data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('user');
@@ -64,21 +133,21 @@ export default function AdminDashboard() {
   const renderContent = () => {
     switch (activeSection) {
       case 'overview':
-        return <OverviewSection />;
+        return <OverviewSection adminStats={adminStats} recentActivities={recentActivities} />;
       case 'members':
-        return <MembersSection />;
+        return <MembersSection members={members} groups={groups} loadAdminData={loadAdminData} />;
       case 'groups':
-        return <GroupsSection />;
+        return <GroupsSection groups={groups} members={members} loadAdminData={loadAdminData} />;
       case 'investments':
-        return <InvestmentsSection />;
+        return <InvestmentsSection investments={investments} groups={groups} loadAdminData={loadAdminData} />;
       case 'content':
-        return <ContentSection />;
+        return <ContentSection educationalContent={educationalContent} user={user} loadAdminData={loadAdminData} />;
       case 'reports':
-        return <ReportsSection />;
+        return <ReportsSection adminStats={adminStats} />;
       case 'settings':
         return <SettingsSection />;
       default:
-        return <OverviewSection />;
+        return <OverviewSection adminStats={adminStats} recentActivities={recentActivities} />;
     }
   };
 
@@ -135,7 +204,13 @@ export default function AdminDashboard() {
 
           {/* Main Content */}
           <div className="lg:col-span-4">
-            {renderContent()}
+            {loading ? (
+              <div className="flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+              </div>
+            ) : (
+              renderContent()
+            )}
           </div>
         </div>
       </div>
@@ -143,20 +218,39 @@ export default function AdminDashboard() {
   );
 }
 
-function OverviewSection() {
+function OverviewSection({ adminStats, recentActivities }: { adminStats: any; recentActivities: any[] }) {
   const stats = [
-    { name: 'Jumla ya Wanachama', value: '1,247', change: '+12%', color: 'bg-blue-500' },
-    { name: 'Vikundi Vya Kazi', value: '120', change: '+8%', color: 'bg-green-500' },
-    { name: 'Uwekezaji wa Jumla', value: 'TSH 45M', change: '+15%', color: 'bg-orange-500' },
-    { name: 'Mapato ya Mwezi', value: 'TSH 2.8M', change: '+5%', color: 'bg-red-500' },
+    { 
+      name: 'Jumla ya Wanachama', 
+      value: adminStats?.totalMembers?.toLocaleString() || '0', 
+      change: adminStats?.newMembersThisMonth ? `+${adminStats.newMembersThisMonth} mwezi huu` : '+0%', 
+      color: 'bg-blue-500' 
+    },
+    { 
+      name: 'Vikundi Vya Kazi', 
+      value: adminStats?.totalGroups?.toLocaleString() || '0', 
+      change: adminStats?.newGroupsThisMonth ? `+${adminStats.newGroupsThisMonth} mwezi huu` : '+0%', 
+      color: 'bg-green-500' 
+    },
+    { 
+      name: 'Uwekezaji wa Jumla', 
+      value: adminStats?.totalInvestment ? `TSH ${(adminStats.totalInvestment / 1000000).toFixed(1)}M` : 'TSH 0', 
+      change: `${adminStats?.returnRate || 0}% mapato`, 
+      color: 'bg-orange-500' 
+    },
+    { 
+      name: 'Mapato ya Jumla', 
+      value: adminStats?.totalReturns ? `TSH ${(adminStats.totalReturns / 1000000).toFixed(1)}M` : 'TSH 0', 
+      change: `${adminStats?.returnRate || 0}% kiwango`, 
+      color: 'bg-red-500' 
+    },
   ];
 
-  const recentActivities = [
-    { action: 'Mwanachama mpya amejiunge', user: 'Amina Hassan', time: '2 masaa zilizopita' },
-    { action: 'Kundi jipya limeanzishwa', user: 'Kundi la Kilimo Dodoma', time: '4 masaa zilizopita' },
-    { action: 'Uwekezaji umeidhinishwa', user: 'Kundi la Ufugaji Mwanza', time: '6 masaa zilizopita' },
-    { action: 'Ripoti ya mwezi imewasilishwa', user: 'John Massawe', time: '1 siku iliyopita' },
-  ];
+  const displayActivities = recentActivities?.slice(0, 4).map(activity => ({
+    action: activity.action,
+    user: activity.user_name,
+    time: new Date(activity.activity_date).toLocaleDateString('sw-TZ')
+  })) || [];
 
   return (
     <div className="space-y-6">
@@ -192,7 +286,7 @@ function OverviewSection() {
         <div className="bg-white rounded-lg shadow-sm p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Shughuli za Hivi Karibuni</h3>
           <div className="space-y-4">
-            {recentActivities.map((activity, index) => (
+            {displayActivities.map((activity, index) => (
               <div key={index} className="flex items-start space-x-3">
                 <div className="w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
                 <div className="flex-1">
@@ -208,9 +302,11 @@ function OverviewSection() {
   );
 }
 
-function MembersSection() {
+function MembersSection({ members, groups, loadAdminData }: { members: any[]; groups: any[]; loadAdminData: () => void }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [showMemberForm, setShowMemberForm] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [editingMember, setEditingMember] = useState<any>(null);
   const [memberForm, setMemberForm] = useState({
     fullName: '',
     email: '',
@@ -223,17 +319,38 @@ function MembersSection() {
     age: ''
   });
   
-  const members = [
-    { id: 1, name: 'Amina Mwalimu', email: 'amina@example.com', group: 'Kundi la Kilimo Mwanza', status: 'active', joinDate: '2024-01-15' },
-    { id: 2, name: 'John Massawe', email: 'john@example.com', group: 'Kundi la Ufugaji Arusha', status: 'active', joinDate: '2024-02-20' },
-    { id: 3, name: 'Fatuma Hassan', email: 'fatuma@example.com', group: 'Kundi la Biashara DSM', status: 'pending', joinDate: '2024-08-25' },
-    { id: 4, name: 'Peter Kimaro', email: 'peter@example.com', group: 'Kundi la Kilimo Mwanza', status: 'active', joinDate: '2024-03-10' },
-  ];
+  const filteredMembers = members.filter(member => {
+    const matchesSearch = member.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         member.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = !statusFilter || member.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
-  const filteredMembers = members.filter(member =>
-    member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    member.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleStatusChange = async (memberId: number, newStatus: string) => {
+    try {
+      await fetch('/api/admin/members', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: memberId, status: newStatus })
+      });
+      loadAdminData();
+    } catch (error) {
+      console.error('Error updating member status:', error);
+    }
+  };
+
+  const handleAddToGroup = async (memberId: number, groupId: number) => {
+    try {
+      await fetch('/api/admin/members', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: memberId, groupId })
+      });
+      loadAdminData();
+    } catch (error) {
+      console.error('Error adding member to group:', error);
+    }
+  };
 
   const handleMemberSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -267,7 +384,7 @@ function MembersSection() {
           gender: '',
           age: ''
         });
-        // Refresh members list here
+        loadAdminData();
         alert('Mwanachama ameongezwa kwa mafanikio!');
       }
     } catch (error) {
@@ -291,14 +408,24 @@ function MembersSection() {
         </div>
 
       {/* Search */}
-      <div className="mb-6">
+      <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
         <input
           type="text"
           placeholder="Tafuta mwanachama..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
         />
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+        >
+          <option value="">Hali zote</option>
+          <option value="active">Hai</option>
+          <option value="pending">Inasubiri</option>
+          <option value="inactive">Haifanyi kazi</option>
+        </select>
       </div>
 
       {/* Members Table */}
@@ -318,29 +445,45 @@ function MembersSection() {
               <tr key={member.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div>
-                    <div className="text-sm font-medium text-gray-900">{member.name}</div>
+                    <div className="text-sm font-medium text-gray-900">{member.full_name}</div>
                     <div className="text-sm text-gray-500">{member.email}</div>
+                    <div className="text-sm text-gray-500">{member.phone}</div>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{member.group}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    member.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {member.status === 'active' ? 'Hai' : 'Inasubiri'}
-                  </span>
+                  <div className="text-sm text-gray-900">{member.group_name || 'Hakuna kundi'}</div>
+                  <div className="text-sm text-gray-500">{member.business_type}</div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{member.joinDate}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                  <button className="text-blue-600 hover:text-blue-900">
-                    <EyeIcon className="h-4 w-4" />
-                  </button>
-                  <button className="text-green-600 hover:text-green-900">
-                    <PencilIcon className="h-4 w-4" />
-                  </button>
-                  <button className="text-red-600 hover:text-red-900">
-                    <TrashIcon className="h-4 w-4" />
-                  </button>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <select
+                    value={member.status}
+                    onChange={(e) => handleStatusChange(member.id, e.target.value)}
+                    className={`px-2 py-1 text-xs font-semibold rounded-full border-0 ${
+                      member.status === 'active' ? 'bg-green-100 text-green-800' : 
+                      member.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+                    }`}
+                  >
+                    <option value="pending">Inasubiri</option>
+                    <option value="active">Hai</option>
+                    <option value="inactive">Haifanyi kazi</option>
+                  </select>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {new Date(member.created_at).toLocaleDateString('sw-TZ')}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <div className="flex space-x-2">
+                    <select
+                      onChange={(e) => e.target.value && handleAddToGroup(member.id, parseInt(e.target.value))}
+                      className="text-xs border border-gray-300 rounded px-2 py-1"
+                      defaultValue=""
+                    >
+                      <option value="">Ongeza kwenye kundi</option>
+                      {groups.filter(g => g.status === 'active').map(group => (
+                        <option key={group.id} value={group.id}>{group.name}</option>
+                      ))}
+                    </select>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -475,13 +618,30 @@ function MembersSection() {
   );
 }
 
-function GroupsSection() {
-  const groups = [
-    { id: 1, name: 'Kundi la Kilimo Mwanza', members: 12, leader: 'Amina Mwalimu', investment: 'TSH 2.5M', status: 'active' },
-    { id: 2, name: 'Kundi la Ufugaji Arusha', members: 8, leader: 'John Massawe', investment: 'TSH 1.8M', status: 'active' },
-    { id: 3, name: 'Kundi la Biashara DSM', members: 15, leader: 'Fatuma Hassan', investment: 'TSH 3.2M', status: 'pending' },
-    { id: 4, name: 'Kundi la Sanaa Mbeya', members: 6, leader: 'Peter Kimaro', investment: 'TSH 900K', status: 'active' },
-  ];
+function GroupsSection({ groups, members, loadAdminData }: { groups: any[]; members: any[]; loadAdminData: () => void }) {
+  const [showGroupForm, setShowGroupForm] = useState(false);
+  const [groupForm, setGroupForm] = useState({
+    name: '',
+    leaderId: '',
+    monthlyContribution: '',
+    foundedDate: new Date().toISOString().split('T')[0]
+  });
+
+  const handleCreateGroup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await fetch('/api/admin/groups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(groupForm)
+      });
+      setShowGroupForm(false);
+      setGroupForm({ name: '', leaderId: '', monthlyContribution: '', foundedDate: new Date().toISOString().split('T')[0] });
+      loadAdminData();
+    } catch (error) {
+      console.error('Error creating group:', error);
+    }
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
@@ -506,9 +666,10 @@ function GroupsSection() {
             </div>
             
             <div className="space-y-2 text-sm text-gray-600 mb-4">
-              <p><strong>Wanachama:</strong> {group.members}</p>
-              <p><strong>Kiongozi:</strong> {group.leader}</p>
-              <p><strong>Uwekezaji:</strong> {group.investment}</p>
+              <p><strong>Wanachama:</strong> {group.member_count || 0}</p>
+              <p><strong>Kiongozi:</strong> {group.leader_name || 'Hakuna'}</p>
+              <p><strong>Uwekezaji:</strong> TSH {parseFloat(group.total_investment || 0).toLocaleString()}</p>
+              <p><strong>Mchango wa Kila Mwezi:</strong> TSH {parseFloat(group.monthly_contribution || 0).toLocaleString()}</p>
             </div>
             
             <div className="flex space-x-2">
@@ -526,18 +687,44 @@ function GroupsSection() {
   );
 }
 
-function InvestmentsSection() {
-  const investments = [
-    { id: 1, group: 'Kundi la Kilimo Mwanza', amount: 'TSH 2.5M', date: '2024-01-15', status: 'active', returns: 'TSH 375K' },
-    { id: 2, group: 'Kundi la Ufugaji Arusha', amount: 'TSH 1.8M', date: '2024-02-20', status: 'active', returns: 'TSH 270K' },
-    { id: 3, group: 'Kundi la Biashara DSM', amount: 'TSH 3.2M', date: '2024-08-25', status: 'pending', returns: '-' },
-  ];
+function InvestmentsSection({ investments, groups, loadAdminData }: { investments: any[]; groups: any[]; loadAdminData: () => void }) {
+  const [showInvestmentForm, setShowInvestmentForm] = useState(false);
+  const [investmentForm, setInvestmentForm] = useState({
+    groupId: '',
+    amount: '',
+    equityPercentage: '',
+    expectedReturn: '',
+    notes: ''
+  });
+
+  const handleCreateInvestment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await fetch('/api/admin/investments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(investmentForm)
+      });
+      setShowInvestmentForm(false);
+      setInvestmentForm({ groupId: '', amount: '', equityPercentage: '', expectedReturn: '', notes: '' });
+      loadAdminData();
+    } catch (error) {
+      console.error('Error creating investment:', error);
+    }
+  };
+
+  const totalInvestment = investments.reduce((sum, inv) => sum + parseFloat(inv.amount || 0), 0);
+  const totalReturns = investments.reduce((sum, inv) => sum + parseFloat(inv.actual_return || 0), 0);
+  const returnRate = totalInvestment > 0 ? ((totalReturns / totalInvestment) * 100).toFixed(1) : '0';
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Usimamizi wa Uwekezaji</h2>
-        <button className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors duration-200 flex items-center space-x-2">
+        <button 
+          onClick={() => setShowInvestmentForm(true)}
+          className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors duration-200 flex items-center space-x-2"
+        >
           <PlusIcon className="h-5 w-5" />
           <span>Uwekezaji Mpya</span>
         </button>
@@ -547,15 +734,15 @@ function InvestmentsSection() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-blue-50 p-4 rounded-lg">
           <h3 className="text-lg font-semibold text-blue-900">Jumla ya Uwekezaji</h3>
-          <p className="text-2xl font-bold text-blue-600">TSH 45.2M</p>
+          <p className="text-2xl font-bold text-blue-600">TSH {(totalInvestment / 1000000).toFixed(1)}M</p>
         </div>
         <div className="bg-green-50 p-4 rounded-lg">
           <h3 className="text-lg font-semibold text-green-900">Mapato ya Jumla</h3>
-          <p className="text-2xl font-bold text-green-600">TSH 6.8M</p>
+          <p className="text-2xl font-bold text-green-600">TSH {(totalReturns / 1000000).toFixed(1)}M</p>
         </div>
         <div className="bg-orange-50 p-4 rounded-lg">
           <h3 className="text-lg font-semibold text-orange-900">Kiwango cha Mapato</h3>
-          <p className="text-2xl font-bold text-orange-600">15.1%</p>
+          <p className="text-2xl font-bold text-orange-600">{returnRate}%</p>
         </div>
       </div>
 
@@ -575,9 +762,9 @@ function InvestmentsSection() {
           <tbody className="bg-white divide-y divide-gray-200">
             {investments.map((investment) => (
               <tr key={investment.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{investment.group}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{investment.amount}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{investment.date}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{investment.group_name}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">TSH {parseFloat(investment.amount || 0).toLocaleString()}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{new Date(investment.investment_date).toLocaleDateString('sw-TZ')}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                     investment.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
@@ -585,7 +772,9 @@ function InvestmentsSection() {
                     {investment.status === 'active' ? 'Hai' : 'Inasubiri'}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{investment.returns}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {investment.actual_return ? `TSH ${parseFloat(investment.actual_return).toLocaleString()}` : '-'}
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                   <button className="text-blue-600 hover:text-blue-900">Angalia</button>
                   <button className="text-green-600 hover:text-green-900">Hariri</button>
@@ -599,7 +788,7 @@ function InvestmentsSection() {
   );
 }
 
-function ReportsSection() {
+function ReportsSection({ adminStats }: { adminStats: any }) {
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
       <h2 className="text-2xl font-bold text-gray-900 mb-6">Ripoti na Takwimu</h2>
@@ -607,29 +796,33 @@ function ReportsSection() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-gray-900">Ripoti za Mwezi</h3>
-          {['Agosti 2024', 'Julai 2024', 'Juni 2024'].map((month, index) => (
+          {adminStats ? [
+            `${new Date().toLocaleDateString('sw-TZ', { month: 'long', year: 'numeric' })}`,
+            `${new Date(Date.now() - 30*24*60*60*1000).toLocaleDateString('sw-TZ', { month: 'long', year: 'numeric' })}`,
+            `${new Date(Date.now() - 60*24*60*60*1000).toLocaleDateString('sw-TZ', { month: 'long', year: 'numeric' })}`
+          ].map((month, index) => (
             <div key={index} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
               <span className="font-medium text-gray-900">Ripoti ya {month}</span>
               <button className="text-orange-600 hover:text-orange-700 font-medium">Pakua</button>
             </div>
-          ))}
+          )) : []}
         </div>
         
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-gray-900">Ripoti za Maalum</h3>
-          {['Takwimu za Jinsia', 'Ukuaji wa Biashara', 'Athari za Kijamii'].map((report, index) => (
+          {adminStats ? ['Takwimu za Jinsia', 'Ukuaji wa Biashara', 'Athari za Kijamii'].map((report, index) => (
             <div key={index} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
               <span className="font-medium text-gray-900">{report}</span>
               <button className="text-orange-600 hover:text-orange-700 font-medium">Tengeneza</button>
             </div>
-          ))}
+          )) : []}
         </div>
       </div>
     </div>
   );
 }
 
-function ContentSection() {
+function ContentSection({ educationalContent, user, loadAdminData }: { educationalContent: any[]; user: any; loadAdminData: () => void }) {
   const [showContentForm, setShowContentForm] = useState(false);
   const [contentForm, setContentForm] = useState({
     title: '',
@@ -652,7 +845,7 @@ function ContentSection() {
         },
         body: JSON.stringify({
           ...contentForm,
-          author_id: 1 // Default admin user ID
+          author_id: user?.id || 1
         }),
       });
 
@@ -668,7 +861,7 @@ function ContentSection() {
           image_url: '',
           is_published: false
         });
-        // Refresh content list here
+        loadAdminData();
       }
     } catch (error) {
       console.error('Error creating content:', error);
@@ -843,41 +1036,35 @@ function ContentSection() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            <tr>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="flex items-center">
-                  <BookOpenIcon className="h-5 w-5 text-blue-500 mr-3" />
-                  <div>
-                    <div className="text-sm font-medium text-gray-900">Msingi wa Biashara</div>
-                    <div className="text-sm text-gray-500">Jifunze misingi ya kuanzisha biashara</div>
-                  </div>
-                </div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                  Biashara
-                </span>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                  Imechapishwa
-                </span>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                Leo
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <button className="text-indigo-600 hover:text-indigo-900 mr-3">
-                  <EyeIcon className="h-4 w-4" />
-                </button>
-                <button className="text-green-600 hover:text-green-900 mr-3">
-                  <PencilIcon className="h-4 w-4" />
-                </button>
-                <button className="text-red-600 hover:text-red-900">
-                  <TrashIcon className="h-4 w-4" />
-                </button>
-              </td>
-            </tr>
+            {educationalContent.map((content) => (
+              <tr key={content.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm font-medium text-gray-900">{content.title}</div>
+                  <div className="text-sm text-gray-500">{content.category}</div>
+                  <div className="text-sm text-gray-500">{content.difficulty_level} • {content.duration} dakika</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                    content.is_published ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                  }`}>
+                    {content.is_published ? 'Imechapishwa' : 'Rasimu'}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{content.author_name}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{new Date(content.created_at).toLocaleDateString('sw-TZ')}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                  <button className="text-blue-600 hover:text-blue-900">
+                    <EyeIcon className="h-4 w-4" />
+                  </button>
+                  <button className="text-green-600 hover:text-green-900">
+                    <PencilIcon className="h-4 w-4" />
+                  </button>
+                  <button className="text-red-600 hover:text-red-900">
+                    <TrashIcon className="h-4 w-4" />
+                  </button>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

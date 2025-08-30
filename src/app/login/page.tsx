@@ -43,10 +43,14 @@ export default function LoginPage() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Login successful:', data);
-        // Store user data in localStorage for dashboard access
         localStorage.setItem('user', JSON.stringify(data.user));
-        router.push('/dashboard');
+        
+        // Role-based redirect
+        if (data.user.role === 'admin') {
+          router.push('/dashboard');
+        } else {
+          router.push('/member-dashboard');
+        }
       } else {
         await response.json();
         setError('Barua pepe au nywila si sahihi. Hakikisha umesajili kwanza.');

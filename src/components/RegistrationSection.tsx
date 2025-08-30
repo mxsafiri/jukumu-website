@@ -87,9 +87,14 @@ export default function RegistrationSection() {
       });
 
       if (authResponse.ok) {
-        console.log('User account created successfully');
-        // Redirect to dashboard after successful registration
-        window.location.href = '/dashboard';
+        const authData = await authResponse.json();
+      
+        // Role-based redirect
+        if (authData.user.role === 'admin') {
+          window.location.href = '/dashboard';
+        } else {
+          window.location.href = '/member-dashboard';
+        }
       } else {
         const authError = await authResponse.json();
         console.error('Auth signup failed:', authError);
