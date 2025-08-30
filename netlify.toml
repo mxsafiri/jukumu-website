@@ -24,3 +24,9 @@
 
 [functions]
   node_bundler = "nft"
+  external_node_modules = ["pg-native"]
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/___netlify-handler"
+  status = 200
