@@ -31,6 +31,7 @@ export default function AdminDashboard() {
   const [educationalContent, setEducationalContent] = useState<any[]>([]);
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  // Force cache invalidation - admin dashboard with live data
 
   // Check authentication and load admin data
   useEffect(() => {
