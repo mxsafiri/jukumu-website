@@ -175,14 +175,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <h3 className="text-sm font-medium text-gray-900 mb-2">Demo Credentials:</h3>
-            <div className="text-xs text-gray-600 space-y-1">
-              <p><strong>Admin:</strong> admin@jukumu.co.tz / admin123</p>
-              <p><strong>Member:</strong> member@jukumu.co.tz / member123</p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
