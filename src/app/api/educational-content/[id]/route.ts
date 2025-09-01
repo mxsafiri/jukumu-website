@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const client = await pool.connect();
     const result = await client.query(`
       SELECT ec.*, u.full_name as author_name
       FROM educational_content ec
       LEFT JOIN users u ON ec.author_id = u.id
       WHERE ec.id = $1
-    `, [params.id]);
+    `, [id]);
     client.release();
     
     if (result.rows.length === 0) {
@@ -23,8 +24,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const { title, description, content, category, duration, difficulty_level, image_url, is_published } = body;
     
@@ -80,7 +82,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     updateFields.push(`updated_at = CURRENT_TIMESTAMP`);
     
     // Add the ID parameter at the end
-    values.push(params.id);
+    values.push(id);
     
     const query = `
       UPDATE educational_content 
@@ -103,14 +105,15 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const client = await pool.connect();
     const result = await client.query(`
       DELETE FROM educational_content 
       WHERE id = $1
       RETURNING *
-    `, [params.id]);
+    `, [id]);
     client.release();
     
     if (result.rows.length === 0) {
