@@ -25,6 +25,7 @@ const translations = {
     'hero.subtitle': 'Tunajenga uchumi endelevu kwa kuwawezesha wajasiriamali wadogo.',
     'hero.cta.entrepreneur': 'Jisajili Sasa',
     'hero.cta.investor': 'Shirikiana Nasi',
+    'hero.learn_more': 'Jifunze',
     
     // About Section
     'about.title': 'Kuhusu JUKUMU',
@@ -93,6 +94,7 @@ const translations = {
     'hero.subtitle': 'We empower small entrepreneurs through training, networks, and economic leadership for a sustainable circular economy.',
     'hero.cta.entrepreneur': 'Register Now',
     'hero.cta.investor': 'Partner With Us',
+    'hero.learn_more': 'Learn More',
     
     // About Section
     'about.title': 'About JUKUMU',
