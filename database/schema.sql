@@ -23,6 +23,8 @@ CREATE TABLE members (
     business_name VARCHAR(255),
     business_description TEXT,
     group_name VARCHAR(255),
+    id_type VARCHAR(50),
+    id_number VARCHAR(100),
     gender VARCHAR(20),
     age INTEGER,
     monthly_revenue DECIMAL(15,2),

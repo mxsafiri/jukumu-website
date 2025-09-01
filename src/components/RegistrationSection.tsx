@@ -361,7 +361,7 @@ export default function RegistrationSection() {
                   required
                   value={formData.businessType}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors duration-200"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors duration-200 text-gray-900"
                 >
                   <option value="">Chagua aina ya biashara</option>
                   <option value="kilimo">Kilimo</option>
@@ -385,7 +385,7 @@ export default function RegistrationSection() {
                   required
                   value={formData.idType}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors duration-200"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors duration-200 text-gray-900"
                 >
                   <option value="">Chagua aina ya kitambulisho</option>
                   <option value="national_id">Kitambulisho cha Taifa</option>
@@ -422,7 +422,7 @@ export default function RegistrationSection() {
                   required
                   value={formData.gender}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors duration-200"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors duration-200 text-gray-900"
                 >
                   <option value="">Chagua jinsia</option>
                   <option value="mwanamke">Mwanamke</option>
