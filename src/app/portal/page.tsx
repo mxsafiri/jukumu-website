@@ -264,19 +264,16 @@ function ProfileSection({ user }: { user: any }) {
 
 function GroupSection() {
   const groupData = {
-    name: 'Kundi la Kilimo Mwanza',
-    members: 12,
-    leader: 'Amina Mwalimu',
-    founded: '2023',
-    totalInvestment: '2,500,000 TSH',
-    monthlyContribution: '50,000 TSH',
+    name: 'Kundi la Biashara',
+    members: 0,
+    leader: 'Hakuna kiongozi bado',
+    founded: '2025',
+    totalInvestment: '0 TSH',
+    monthlyContribution: '0 TSH',
   };
 
   const members = [
-    { name: 'Amina Mwalimu', role: 'Kiongozi', business: 'Kilimo cha Mahindi' },
-    { name: 'John Massawe', role: 'Mwanachama', business: 'Ufugaji wa Ng\'ombe' },
-    { name: 'Fatuma Hassan', role: 'Mwanachama', business: 'Biashara ya Mboga' },
-    { name: 'Peter Kimaro', role: 'Mwanachama', business: 'Kilimo cha Nazi' },
+    { name: 'Hakuna wanachama bado', role: 'Mfumo mpya', business: 'Subiri wanachama wajisajili' },
   ];
 
   return (

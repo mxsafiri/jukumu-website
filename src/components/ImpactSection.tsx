@@ -57,21 +57,21 @@ export default function ImpactSection() {
 
   const testimonials = [
     {
-      name: 'Amina Mwalimu',
-      role: 'Kundi la Kilimo - Mwanza',
-      quote: 'JUKUMU imebadilisha maisha yangu. Sasa nina biashara kubwa ya mazao na nina msaada wa kikundi changu.',
+      name: 'Mwanachama wa JUKUMU',
+      role: 'Kundi la Biashara - Tanzania',
+      quote: 'JUKUMU ni mfumo mpya wa kuwezesha wajasiriamali. Tunasubiri wanachama wajisajili.',
       image: '/PXL_20250527_143914521.PORTRAIT.jpg',
     },
     {
-      name: 'John Massawe',
-      role: 'Kundi la Ufugaji - Arusha',
-      quote: 'Kupitia mafunzo ya JUKUMU, nimejifunza jinsi ya kuongoza biashara yangu vizuri zaidi.',
+      name: 'Mjasiriamali',
+      role: 'Kundi la Maendeleo - Tanzania',
+      quote: 'Mfumo huu utasaidia wajasiriamali kupata mafunzo na msaada wa kifedha.',
       image: '/PXL_20250531_084511611.PORTRAIT.jpg',
     },
     {
-      name: 'Fatuma Hassan',
-      role: 'Kundi la Ubunifu - Dar es Salaam',
-      quote: 'Mtandao wa JUKUMU umeniwezesha kufikia masoko mapya na kuongeza mapato yangu.',
+      name: 'Mwanzilishi wa Biashara',
+      role: 'Kundi la Uongozi - Tanzania',
+      quote: 'Tunatarajia kuona mafanikio makubwa kupitia ushirikiano na JUKUMU.',
       image: '/PXL_20250722_105646219.PORTRAIT.jpg',
     },
   ];
@@ -101,20 +101,8 @@ export default function ImpactSection() {
         }
       } catch (error) {
         console.error('Error fetching educational content:', error);
-        // Fallback to sample data if API fails
-        setEducationalContent([
-          {
-            id: 1,
-            title: 'Msingi wa Biashara',
-            description: 'Jifunze misingi ya kuanzisha na kuendesha biashara yenye mafanikio',
-            category: 'Biashara',
-            categoryColor: 'bg-blue-100 text-blue-800',
-            duration: '2 masaa',
-            participants: 45,
-            icon: CurrencyDollarIcon,
-            image: '/PXL_20250618_095258793.PORTRAIT.jpg'
-          }
-        ]);
+        // Fallback to empty array if API fails
+        setEducationalContent([]);
       }
     };
 

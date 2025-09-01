@@ -57,43 +57,63 @@ export default function AdminDashboard() {
     try {
       setLoading(true);
       
+      // Add cache busting timestamp
+      const timestamp = new Date().getTime();
+      const cacheParams = `?_t=${timestamp}`;
+      
       // Load admin statistics
-      const statsResponse = await fetch('/api/admin/stats');
+      const statsResponse = await fetch(`/api/admin/stats${cacheParams}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      });
       if (statsResponse.ok) {
         const statsData = await statsResponse.json();
+        console.log('Admin stats loaded:', statsData);
         setAdminStats(statsData);
       }
       
       // Load members
-      const membersResponse = await fetch('/api/admin/members');
+      const membersResponse = await fetch(`/api/admin/members${cacheParams}`, {
+        cache: 'no-store'
+      });
       if (membersResponse.ok) {
         const membersData = await membersResponse.json();
         setMembers(membersData);
       }
       
       // Load groups
-      const groupsResponse = await fetch('/api/admin/groups');
+      const groupsResponse = await fetch(`/api/admin/groups${cacheParams}`, {
+        cache: 'no-store'
+      });
       if (groupsResponse.ok) {
         const groupsData = await groupsResponse.json();
         setGroups(groupsData);
       }
       
       // Load investments
-      const investmentsResponse = await fetch('/api/admin/investments');
+      const investmentsResponse = await fetch(`/api/admin/investments${cacheParams}`, {
+        cache: 'no-store'
+      });
       if (investmentsResponse.ok) {
         const investmentsData = await investmentsResponse.json();
         setInvestments(investmentsData);
       }
       
       // Load educational content
-      const contentResponse = await fetch('/api/educational-content?includeUnpublished=true');
+      const contentResponse = await fetch(`/api/educational-content?includeUnpublished=true&_t=${timestamp}`, {
+        cache: 'no-store'
+      });
       if (contentResponse.ok) {
         const contentData = await contentResponse.json();
         setEducationalContent(contentData);
       }
       
       // Load recent activities
-      const activitiesResponse = await fetch('/api/admin/activities');
+      const activitiesResponse = await fetch(`/api/admin/activities${cacheParams}`, {
+        cache: 'no-store'
+      });
       if (activitiesResponse.ok) {
         const activitiesData = await activitiesResponse.json();
         setRecentActivities(activitiesData);
@@ -287,15 +307,22 @@ function OverviewSection({ adminStats, recentActivities }: { adminStats: any; re
         <div className="bg-white rounded-lg shadow-sm p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Shughuli za Hivi Karibuni</h3>
           <div className="space-y-4">
-            {displayActivities.map((activity, index) => (
-              <div key={index} className="flex items-start space-x-3">
-                <div className="w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
-                <div className="flex-1">
-                  <p className="text-sm text-gray-900">{activity.action}</p>
-                  <p className="text-xs text-gray-600">{activity.user} • {activity.time}</p>
+            {displayActivities.length > 0 ? (
+              displayActivities.map((activity, index) => (
+                <div key={index} className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-900">{activity.action}</p>
+                    <p className="text-xs text-gray-600">{activity.user} • {activity.time}</p>
+                  </div>
                 </div>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500 text-sm">Hakuna shughuli za hivi karibuni</p>
+                <p className="text-gray-400 text-xs mt-1">Shughuli zitaonekana hapa baada ya kuanza kutumia mfumo</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>
@@ -442,52 +469,63 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredMembers.map((member) => (
-              <tr key={member.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div>
-                    <div className="text-sm font-medium text-gray-900">{member.full_name}</div>
-                    <div className="text-sm text-gray-500">{member.email}</div>
-                    <div className="text-sm text-gray-500">{member.phone}</div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{member.group_name || 'Hakuna kundi'}</div>
-                  <div className="text-sm text-gray-500">{member.business_type}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <select
-                    value={member.status}
-                    onChange={(e) => handleStatusChange(member.id, e.target.value)}
-                    className={`px-2 py-1 text-xs font-semibold rounded-full border-0 ${
-                      member.status === 'active' ? 'bg-green-100 text-green-800' : 
-                      member.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
-                    }`}
-                  >
-                    <option value="pending">Inasubiri</option>
-                    <option value="active">Hai</option>
-                    <option value="inactive">Haifanyi kazi</option>
-                  </select>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {new Date(member.created_at).toLocaleDateString('sw-TZ')}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <div className="flex space-x-2">
+            {filteredMembers.length > 0 ? (
+              filteredMembers.map((member) => (
+                <tr key={member.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">{member.full_name}</div>
+                      <div className="text-sm text-gray-500">{member.email}</div>
+                      <div className="text-sm text-gray-500">{member.phone}</div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">{member.group_name || 'Hakuna kundi'}</div>
+                    <div className="text-sm text-gray-500">{member.business_type}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <select
-                      onChange={(e) => e.target.value && handleAddToGroup(member.id, parseInt(e.target.value))}
-                      className="text-xs border border-gray-300 rounded px-2 py-1"
-                      defaultValue=""
+                      value={member.status}
+                      onChange={(e) => handleStatusChange(member.id, e.target.value)}
+                      className={`px-2 py-1 text-xs font-semibold rounded-full border-0 ${
+                        member.status === 'active' ? 'bg-green-100 text-green-800' : 
+                        member.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+                      }`}
                     >
-                      <option value="">Ongeza kwenye kundi</option>
-                      {groups.filter(g => g.status === 'active').map(group => (
-                        <option key={group.id} value={group.id}>{group.name}</option>
-                      ))}
+                      <option value="pending">Inasubiri</option>
+                      <option value="active">Hai</option>
+                      <option value="inactive">Haifanyi kazi</option>
                     </select>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {new Date(member.created_at).toLocaleDateString('sw-TZ')}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex space-x-2">
+                      <select
+                        onChange={(e) => e.target.value && handleAddToGroup(member.id, parseInt(e.target.value))}
+                        className="text-xs border border-gray-300 rounded px-2 py-1"
+                        defaultValue=""
+                      >
+                        <option value="">Ongeza kwenye kundi</option>
+                        {groups.filter(g => g.status === 'active').map(group => (
+                          <option key={group.id} value={group.id}>{group.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={5} className="px-6 py-12 text-center">
+                  <div className="text-gray-500">
+                    <p className="text-lg font-medium">Hakuna wanachama bado</p>
+                    <p className="text-sm mt-1">Wanachama wataonekana hapa baada ya kujisajili kwenye tovuti</p>
                   </div>
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
@@ -655,34 +693,44 @@ function GroupsSection({ groups, members, loadAdminData }: { groups: any[]; memb
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {groups.map((group) => (
-          <div key={group.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow duration-200">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">{group.name}</h3>
-              <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                group.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-              }`}>
-                {group.status === 'active' ? 'Hai' : 'Inasubiri'}
-              </span>
+        {groups.length > 0 ? (
+          groups.map((group) => (
+            <div key={group.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow duration-200">
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">{group.name}</h3>
+                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                  group.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {group.status === 'active' ? 'Hai' : 'Inasubiri'}
+                </span>
+              </div>
+              
+              <div className="space-y-2 text-sm text-gray-600 mb-4">
+                <p><strong>Wanachama:</strong> {group.member_count || 0}</p>
+                <p><strong>Kiongozi:</strong> {group.leader_name || 'Hakuna'}</p>
+                <p><strong>Uwekezaji:</strong> TSH {parseFloat(group.total_investment || 0).toLocaleString()}</p>
+                <p><strong>Mchango wa Kila Mwezi:</strong> TSH {parseFloat(group.monthly_contribution || 0).toLocaleString()}</p>
+              </div>
+              
+              <div className="flex space-x-2">
+                <button className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700 transition-colors duration-200">
+                  Angalia
+                </button>
+                <button className="flex-1 bg-gray-600 text-white px-3 py-2 rounded text-sm hover:bg-gray-700 transition-colors duration-200">
+                  Hariri
+                </button>
+              </div>
             </div>
-            
-            <div className="space-y-2 text-sm text-gray-600 mb-4">
-              <p><strong>Wanachama:</strong> {group.member_count || 0}</p>
-              <p><strong>Kiongozi:</strong> {group.leader_name || 'Hakuna'}</p>
-              <p><strong>Uwekezaji:</strong> TSH {parseFloat(group.total_investment || 0).toLocaleString()}</p>
-              <p><strong>Mchango wa Kila Mwezi:</strong> TSH {parseFloat(group.monthly_contribution || 0).toLocaleString()}</p>
-            </div>
-            
-            <div className="flex space-x-2">
-              <button className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700 transition-colors duration-200">
-                Angalia
-              </button>
-              <button className="flex-1 bg-gray-600 text-white px-3 py-2 rounded text-sm hover:bg-gray-700 transition-colors duration-200">
-                Hariri
-              </button>
+          ))
+        ) : (
+          <div className="col-span-full text-center py-12">
+            <div className="text-gray-500">
+              <UserGroupIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+              <p className="text-lg font-medium">Hakuna vikundi bado</p>
+              <p className="text-sm mt-1">Vikundi vitaonekana hapa baada ya kuanzishwa</p>
             </div>
           </div>
-        ))}
+        )}
       </div>
     </div>
   );
