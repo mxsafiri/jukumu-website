@@ -1091,20 +1091,15 @@ function ContentSection({ educationalContent, user, loadAdminData }: { education
   const handleDeleteContent = async (contentId: number) => {
     if (confirm('Je, una uhakika unataka kufuta mafunzo haya?')) {
       try {
-        console.log('Deleting content with ID:', contentId);
         const response = await fetch(`/api/educational-content/${contentId}`, {
           method: 'DELETE'
         });
-        
-        console.log('Delete response status:', response.status);
-        const responseData = await response.json();
-        console.log('Delete response data:', responseData);
         
         if (response.ok) {
           loadAdminData();
           alert('Mafunzo yamefutwa kwa mafanikio!');
         } else {
-          console.error('Delete failed:', responseData);
+          const responseData = await response.json();
           alert(`Hitilafu: ${responseData.error || 'Imeshindwa kufuta'}`);
         }
       } catch (error) {
