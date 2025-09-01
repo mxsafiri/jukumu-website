@@ -8,6 +8,13 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'JUKUMU Fund - Empowering Communities Through Collective Investment',
   description: 'Join JUKUMU Fund to access group-based investment opportunities, business training, and community support for sustainable economic growth.',
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: '32x32' }
+    ],
+    apple: { url: '/favicon.svg', type: 'image/svg+xml' }
+  }
 }
 
 export default function RootLayout({
