@@ -25,6 +25,21 @@ export async function POST(request: NextRequest) {
     const { fullName, email, phone, location, businessType, idType, idNumber, gender, age, status = 'pending' } = body;
     
     const client = await pool.connect();
+    
+    // First, try to add the missing columns if they don't exist
+    try {
+      await client.query(`
+        ALTER TABLE members 
+        ADD COLUMN IF NOT EXISTS id_type VARCHAR(50);
+      `);
+      await client.query(`
+        ALTER TABLE members 
+        ADD COLUMN IF NOT EXISTS id_number VARCHAR(100);
+      `);
+    } catch (alterError) {
+      console.log('Columns might already exist:', alterError);
+    }
+    
     const result = await client.query(`
       INSERT INTO members (full_name, email, phone, location, business_type, id_type, id_number, gender, age, status)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
@@ -35,6 +50,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(result.rows[0], { status: 201 });
   } catch (error) {
     console.error('Database error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
   }
 }
