@@ -873,6 +873,8 @@ function ReportsSection({ adminStats }: { adminStats: any }) {
 
 function ContentSection({ educationalContent, user, loadAdminData }: { educationalContent: any[]; user: any; loadAdminData: () => void }) {
   const [showContentForm, setShowContentForm] = useState(false);
+  const [editingContent, setEditingContent] = useState<any>(null);
+  const [viewingContent, setViewingContent] = useState<any>(null);
   const [contentForm, setContentForm] = useState({
     title: '',
     description: '',
@@ -887,8 +889,11 @@ function ContentSection({ educationalContent, user, loadAdminData }: { education
   const handleContentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/educational-content', {
-        method: 'POST',
+      const url = editingContent ? `/api/educational-content/${editingContent.id}` : '/api/educational-content';
+      const method = editingContent ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
         },
@@ -900,6 +905,7 @@ function ContentSection({ educationalContent, user, loadAdminData }: { education
 
       if (response.ok) {
         setShowContentForm(false);
+        setEditingContent(null);
         setContentForm({
           title: '',
           description: '',
@@ -911,9 +917,70 @@ function ContentSection({ educationalContent, user, loadAdminData }: { education
           is_published: false
         });
         loadAdminData();
+        alert(editingContent ? 'Mafunzo yamebadilishwa kwa mafanikio!' : 'Mafunzo yameongezwa kwa mafanikio!');
       }
     } catch (error) {
-      console.error('Error creating content:', error);
+      console.error('Error saving content:', error);
+      alert('Hitilafu imetokea. Jaribu tena.');
+    }
+  };
+
+  const handleViewContent = (content: any) => {
+    setViewingContent(content);
+  };
+
+  const handleEditContent = (content: any) => {
+    setEditingContent(content);
+    setContentForm({
+      title: content.title,
+      description: content.description,
+      content: content.content,
+      category: content.category,
+      duration: content.duration,
+      difficulty_level: content.difficulty_level,
+      image_url: content.image_url || '',
+      is_published: content.is_published
+    });
+    setShowContentForm(true);
+  };
+
+  const handleDeleteContent = async (contentId: number) => {
+    if (confirm('Je, una uhakika unataka kufuta mafunzo haya?')) {
+      try {
+        const response = await fetch(`/api/educational-content/${contentId}`, {
+          method: 'DELETE'
+        });
+        
+        if (response.ok) {
+          loadAdminData();
+          alert('Mafunzo yamefutwa kwa mafanikio!');
+        }
+      } catch (error) {
+        console.error('Error deleting content:', error);
+        alert('Hitilafu imetokea wakati wa kufuta.');
+      }
+    }
+  };
+
+  const handleTogglePublish = async (contentId: number, currentStatus: boolean) => {
+    try {
+      const response = await fetch(`/api/educational-content/${contentId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          is_published: !currentStatus
+        }),
+      });
+      
+      if (response.ok) {
+        loadAdminData();
+        alert(currentStatus ? 'Mafunzo yamefichwa!' : 'Mafunzo yamechapishwa!');
+      }
+    } catch (error) {
+      console.error('Error toggling publish status:', error);
+      alert('Hitilafu imetokea.');
     }
   };
 
@@ -922,7 +989,20 @@ function ContentSection({ educationalContent, user, loadAdminData }: { education
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">Mafunzo na Elimu</h2>
         <button
-          onClick={() => setShowContentForm(true)}
+          onClick={() => {
+            setEditingContent(null);
+            setContentForm({
+              title: '',
+              description: '',
+              content: '',
+              category: '',
+              duration: '',
+              difficulty_level: 'beginner',
+              image_url: '',
+              is_published: false
+            });
+            setShowContentForm(true);
+          }}
           className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
           <PlusIcon className="h-5 w-5 mr-2" />
@@ -932,7 +1012,7 @@ function ContentSection({ educationalContent, user, loadAdminData }: { education
 
       {showContentForm && (
         <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">Mafunzo Mapya</h3>
+          <h3 className="text-lg font-semibold mb-4">{editingContent ? 'Hariri Mafunzo' : 'Mafunzo Mapya'}</h3>
           <form onSubmit={handleContentSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -1049,17 +1129,83 @@ function ContentSection({ educationalContent, user, loadAdminData }: { education
                 type="submit"
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
               >
-                Hifadhi Mafunzo
+                {editingContent ? 'Hifadhi Mabadiliko' : 'Hifadhi Mafunzo'}
               </button>
               <button
                 type="button"
-                onClick={() => setShowContentForm(false)}
+                onClick={() => {
+                  setShowContentForm(false);
+                  setEditingContent(null);
+                }}
                 className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
               >
                 Ghairi
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* View Content Modal */}
+      {viewingContent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">{viewingContent.title}</h2>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {viewingContent.category} • {viewingContent.difficulty_level} • {viewingContent.duration} dakika
+                  </p>
+                </div>
+                <button
+                  onClick={() => setViewingContent(null)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Maelezo</h3>
+                <p className="text-gray-700">{viewingContent.description}</p>
+              </div>
+              
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Maudhui</h3>
+                <div className="prose max-w-none text-gray-700 whitespace-pre-wrap">
+                  {viewingContent.content}
+                </div>
+              </div>
+              
+              <div className="flex justify-between items-center pt-4 border-t">
+                <div className="text-sm text-gray-500">
+                  Imeandikwa na {viewingContent.author_name} • {new Date(viewingContent.created_at).toLocaleDateString('sw-TZ')}
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => {
+                      setViewingContent(null);
+                      handleEditContent(viewingContent);
+                    }}
+                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+                  >
+                    Hariri
+                  </button>
+                  <button
+                    onClick={() => handleTogglePublish(viewingContent.id, viewingContent.is_published)}
+                    className={`px-4 py-2 rounded-lg ${
+                      viewingContent.is_published 
+                        ? 'bg-yellow-600 text-white hover:bg-yellow-700' 
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                    }`}
+                  >
+                    {viewingContent.is_published ? 'Ficha' : 'Chapisha'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -1102,13 +1248,25 @@ function ContentSection({ educationalContent, user, loadAdminData }: { education
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{content.author_name}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{new Date(content.created_at).toLocaleDateString('sw-TZ')}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                  <button className="text-blue-600 hover:text-blue-900">
+                  <button 
+                    onClick={() => handleViewContent(content)}
+                    className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
+                    title="Angalia"
+                  >
                     <EyeIcon className="h-4 w-4" />
                   </button>
-                  <button className="text-green-600 hover:text-green-900">
+                  <button 
+                    onClick={() => handleEditContent(content)}
+                    className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50"
+                    title="Hariri"
+                  >
                     <PencilIcon className="h-4 w-4" />
                   </button>
-                  <button className="text-red-600 hover:text-red-900">
+                  <button 
+                    onClick={() => handleDeleteContent(content.id)}
+                    className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
+                    title="Futa"
+                  >
                     <TrashIcon className="h-4 w-4" />
                   </button>
                 </td>
