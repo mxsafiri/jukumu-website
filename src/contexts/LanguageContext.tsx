@@ -22,7 +22,7 @@ const translations = {
     
     // Hero Section
     'hero.title': 'JUKUMU – Kuunganisha Wajasiriamali na Ustawi wa Jamii',
-    'hero.subtitle': 'Tunawawezesha wajasiriamali wadogo kupitia mafunzo, mitandao, na uongozi wa kiuchumi kwa ajili ya uchumi wa mzunguko endelevu.',
+    'hero.subtitle': 'Tunajenga uchumi endelevu kwa kuwawezesha wajasiriamali wadogo.',
     'hero.cta.entrepreneur': 'Jisajili Sasa',
     'hero.cta.investor': 'Shirikiana Nasi',
     
