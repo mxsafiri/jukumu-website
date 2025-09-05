@@ -18,6 +18,7 @@ const translations = {
     'nav.how_it_works': 'Jinsi Inavyofanya Kazi',
     'nav.impact': 'Athari',
     'nav.join': 'Jiunge',
+    'nav.investor': 'Wekeza',
     'nav.login': 'Ingia',
     
     // Hero Section
@@ -86,6 +87,7 @@ const translations = {
     'nav.about': 'About',
     'nav.how_it_works': 'How It Works',
     'nav.impact': 'Impact',
+    'nav.investor': 'Invest',
     'nav.join': 'Join',
     'nav.login': 'Login',
     

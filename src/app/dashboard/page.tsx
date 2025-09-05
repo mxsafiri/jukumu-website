@@ -686,7 +686,10 @@ function GroupsSection({ groups, members, loadAdminData }: { groups: any[]; memb
     <div className="bg-white rounded-lg shadow-sm p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Usimamizi wa Vikundi</h2>
-        <button className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors duration-200 flex items-center space-x-2">
+        <button 
+          onClick={() => setShowGroupForm(true)}
+          className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors duration-200 flex items-center space-x-2"
+        >
           <PlusIcon className="h-5 w-5" />
           <span>Anzisha Kundi Jipya</span>
         </button>
@@ -732,6 +735,87 @@ function GroupsSection({ groups, members, loadAdminData }: { groups: any[]; memb
           </div>
         )}
       </div>
+
+      {/* Group Creation Form Modal */}
+      {showGroupForm && (
+        <div className="mt-6 bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold mb-4">Anzisha Kundi Jipya</h3>
+          <form onSubmit={handleCreateGroup} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Jina la Kundi *
+                </label>
+                <input
+                  type="text"
+                  value={groupForm.name}
+                  onChange={(e) => setGroupForm({...groupForm, name: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  placeholder="Ingiza jina la kundi"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Kiongozi wa Kundi
+                </label>
+                <select
+                  value={groupForm.leaderId}
+                  onChange={(e) => setGroupForm({...groupForm, leaderId: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                >
+                  <option value="">Chagua kiongozi</option>
+                  {members.filter(m => m.status === 'active').map(member => (
+                    <option key={member.id} value={member.id}>{member.full_name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Mchango wa Kila Mwezi (TSH) *
+                </label>
+                <input
+                  type="number"
+                  value={groupForm.monthlyContribution}
+                  onChange={(e) => setGroupForm({...groupForm, monthlyContribution: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  placeholder="50000"
+                  min="1000"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Tarehe ya Kuanzishwa *
+                </label>
+                <input
+                  type="date"
+                  value={groupForm.foundedDate}
+                  onChange={(e) => setGroupForm({...groupForm, foundedDate: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  required
+                />
+              </div>
+            </div>
+            
+            <div className="flex space-x-4">
+              <button
+                type="submit"
+                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors duration-200"
+              >
+                Anzisha Kundi
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowGroupForm(false)}
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors duration-200"
+              >
+                Ghairi
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

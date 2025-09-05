@@ -10,12 +10,12 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navigation = [
-    { name: t('nav.home'), href: '#home', icon: HomeIcon },
-    { name: t('nav.about'), href: '#about', icon: InformationCircleIcon },
-    { name: t('nav.how_it_works'), href: '#how-it-works', icon: ChartBarIcon },
-    { name: t('nav.impact'), href: '#impact', icon: ChartBarIcon },
-    { name: t('nav.join'), href: '#join', icon: UserPlusIcon },
-    { name: t('nav.investor'), href: '#investor', icon: CurrencyDollarIcon },
+    { name: t('nav.home'), href: '/#home', icon: HomeIcon },
+    { name: t('nav.about'), href: '/#about', icon: InformationCircleIcon },
+    { name: t('nav.how_it_works'), href: '/#how-it-works', icon: ChartBarIcon },
+    { name: t('nav.impact'), href: '/#impact', icon: ChartBarIcon },
+    { name: t('nav.join'), href: '/#join', icon: UserPlusIcon },
+    { name: t('nav.investor'), href: '/investor', icon: CurrencyDollarIcon },
   ];
 
   return (
@@ -35,14 +35,14 @@ export default function Header() {
 
           <div className="hidden lg:ml-8 lg:flex lg:space-x-6">
             {navigation.map((item) => (
-              <a
+              <Link
                 key={item.name}
                 href={item.href}
                 className="flex items-center space-x-2 text-sm font-medium text-gray-700 hover:text-orange-600 transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-orange-50"
               >
                 <item.icon className="h-4 w-4" />
                 <span>{item.name}</span>
-              </a>
+              </Link>
             ))}
           </div>
 
@@ -86,7 +86,7 @@ export default function Header() {
         <div className={`${isMenuOpen ? 'block' : 'hidden'} lg:hidden`}>
           <div className="space-y-1 px-2 pb-3 pt-2">
             {navigation.map((item) => (
-              <a
+              <Link
                 key={item.name}
                 href={item.href}
                 className="flex items-center space-x-3 rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-orange-600"
@@ -94,7 +94,7 @@ export default function Header() {
               >
                 <item.icon className="h-5 w-5" />
                 <span>{item.name}</span>
-              </a>
+              </Link>
             ))}
           </div>
         </div>
