@@ -210,7 +210,7 @@ export default function InvestorPage() {
                   <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white leading-tight">
                     <span className="block">Invest in</span>
                     <span className="block text-green-400 text-3xl sm:text-4xl lg:text-5xl font-normal mt-2">
-                      Tanzania's Future
+                      Tanzania&apos;s Future
                     </span>
                   </h1>
                   
