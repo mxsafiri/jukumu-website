@@ -45,28 +45,9 @@ export default function InvestorPage() {
       if (response.ok) {
         const data = await response.json();
         setStats(data);
-      } else {
-        // Fallback to mock data if API fails
-        setStats({
-          totalMembers: 1247,
-          totalGroups: 89,
-          totalInvestment: 45600000,
-          totalReturns: 8200000,
-          averageReturn: 18,
-          activeRegions: 12
-        });
       }
     } catch (error) {
       console.error('Error loading stats:', error);
-      // Fallback to mock data on error
-      setStats({
-        totalMembers: 1247,
-        totalGroups: 89,
-        totalInvestment: 45600000,
-        totalReturns: 8200000,
-        averageReturn: 18,
-        activeRegions: 12
-      });
     } finally {
       setLoading(false);
     }
