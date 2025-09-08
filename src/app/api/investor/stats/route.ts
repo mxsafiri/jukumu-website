@@ -71,6 +71,7 @@ export async function GET() {
       activeRegions
     };
     
+    console.log('Real database stats:', stats);
     return NextResponse.json(stats);
   } catch (error) {
     console.error('Database error:', error);
