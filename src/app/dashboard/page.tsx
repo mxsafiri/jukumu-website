@@ -102,12 +102,17 @@ export default function AdminDashboard() {
       }
       
       // Load investments
-      const investmentsResponse = await fetch(`/api/admin/investments${cacheParams}`, {
-        cache: 'no-store'
-      });
-      if (investmentsResponse.ok) {
-        const investmentsData = await investmentsResponse.json();
-        setInvestments(investmentsData);
+      try {
+        const investmentsResponse = await fetch(`/api/admin/investments${cacheParams}`, {
+          cache: 'no-store'
+        });
+        if (investmentsResponse.ok) {
+          const investmentsData = await investmentsResponse.json();
+          setInvestments(investmentsData);
+        }
+      } catch (investmentError) {
+        console.log('Failed to load investments:', investmentError);
+        setInvestments([]); // Set empty array as fallback
       }
       
       // Load educational content
