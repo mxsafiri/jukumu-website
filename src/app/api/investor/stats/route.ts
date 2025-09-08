@@ -18,35 +18,33 @@ export async function GET() {
 
     const client = await pool.connect();
     
-    // Get total members
+    // Get total members (simplified query without status column)
     const membersResult = await client.query(`
       SELECT COUNT(*) as total_members
       FROM users 
-      WHERE role = 'member' AND status = 'active'
+      WHERE role = 'member'
     `);
     
-    // Get total groups
+    // Get total groups (simplified query without status column)
     const groupsResult = await client.query(`
       SELECT COUNT(*) as total_groups
-      FROM groups 
-      WHERE status = 'active'
+      FROM groups
     `);
     
-    // Get total investment and calculate average return
+    // Get total investment and calculate average return (simplified query)
     const investmentResult = await client.query(`
       SELECT 
         COALESCE(SUM(amount), 0) as total_investment,
         COALESCE(SUM(actual_return), 0) as total_returns,
         COUNT(*) as investment_count
-      FROM investments 
-      WHERE status = 'active'
+      FROM investments
     `);
     
-    // Get active regions (count distinct locations from members)
+    // Get active regions (simplified query)
     const regionsResult = await client.query(`
       SELECT COUNT(DISTINCT location) as active_regions
       FROM users 
-      WHERE role = 'member' AND status = 'active' AND location IS NOT NULL
+      WHERE role = 'member' AND location IS NOT NULL
     `);
     
     client.release();
