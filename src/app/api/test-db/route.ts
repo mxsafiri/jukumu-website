@@ -8,11 +8,31 @@ export async function GET() {
   let connectionTest = 'not_tested';
   let error = null;
   
+  let tableInfo = {};
+  
   try {
     const client = await pool.connect();
+    
+    // Test basic connection
     const result = await client.query('SELECT NOW()');
-    client.release();
     connectionTest = 'success';
+    
+    // Check if tables exist and have data
+    try {
+      const usersCount = await client.query('SELECT COUNT(*) FROM users');
+      const groupsCount = await client.query('SELECT COUNT(*) FROM groups');
+      const investmentsCount = await client.query('SELECT COUNT(*) FROM investments');
+      
+      tableInfo = {
+        users: parseInt(usersCount.rows[0].count),
+        groups: parseInt(groupsCount.rows[0].count),
+        investments: parseInt(investmentsCount.rows[0].count)
+      };
+    } catch (tableErr) {
+      tableInfo = { error: tableErr instanceof Error ? tableErr.message : 'Table query failed' };
+    }
+    
+    client.release();
   } catch (err) {
     connectionTest = 'failed';
     error = err instanceof Error ? err.message : 'Unknown error';
@@ -23,6 +43,7 @@ export async function GET() {
     dbUrlLength,
     nodeEnv: process.env.NODE_ENV,
     connectionTest,
+    tableInfo,
     error,
     timestamp: new Date().toISOString()
   });
