@@ -198,7 +198,7 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">JUKUMU Admin</h1>
-                <p className="text-sm text-gray-600">Karibu, {user.fullName || user.email}</p>
+                <p className="text-sm text-gray-600">Karibu, {user?.fullName || user?.email}</p>
               </div>
             </div>
             <button
