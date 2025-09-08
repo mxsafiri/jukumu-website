@@ -70,10 +70,10 @@ export default function LoginPage() {
         <div className="text-center">
           <Link href="/" className="flex items-center justify-center space-x-2 mb-8">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-r from-orange-500 to-red-500">
-              <span className="text-xl font-bold text-white">J</span>
+              <span className="text-xl font-bold text-white">W</span>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">JUKUMU Fund</h1>
+              <h1 className="text-2xl font-bold text-gray-900">WashikaDAU</h1>
             </div>
           </Link>
           <h2 className="text-3xl font-bold text-gray-900">Ingia kwenye akaunti yako</h2>
