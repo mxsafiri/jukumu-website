@@ -18,6 +18,7 @@ import {
   AcademicCapIcon,
   BookOpenIcon
 } from '@heroicons/react/24/outline';
+import GrowthChart from '@/components/GrowthChart';
 
 export default function AdminDashboard() {
   const { } = useLanguage();
@@ -295,12 +296,13 @@ function OverviewSection({ adminStats, recentActivities }: { adminStats: any; re
 
       {/* Charts and Recent Activities */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Growth Chart Placeholder */}
+        {/* Growth Chart */}
         <div className="bg-white rounded-lg shadow-sm p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Ukuaji wa Wanachama</h3>
-          <div className="h-64 bg-gradient-to-br from-orange-100 to-red-100 rounded-lg flex items-center justify-center">
-            <p className="text-gray-500">Chati ya Ukuaji (Chart.js integration)</p>
-          </div>
+          <GrowthChart 
+            memberCount={adminStats?.totalMembers || 0}
+            groupCount={adminStats?.totalGroups || 0}
+          />
         </div>
 
         {/* Recent Activities */}
