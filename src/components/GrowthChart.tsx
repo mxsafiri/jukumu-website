@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -31,6 +31,15 @@ interface GrowthChartProps {
 }
 
 export default function GrowthChart({ memberCount, groupCount }: GrowthChartProps) {
+  // Fallback to prevent chart from breaking if no data
+  if (!memberCount && !groupCount) {
+    return (
+      <div className="h-64 w-full flex items-center justify-center bg-gray-50 rounded-lg">
+        <p className="text-gray-500">Loading chart data...</p>
+      </div>
+    );
+  }
+
   // Generate realistic growth data based on current counts
   const generateGrowthData = () => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
