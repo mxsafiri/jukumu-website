@@ -682,10 +682,12 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
 }
 
 function GroupsSection({ groups, members, loadAdminData }: { groups: any[]; members: any[]; loadAdminData: () => void }) {
-  const [showGroupForm, setShowGroupForm] = useState(false);
-  const [selectedGroup, setSelectedGroup] = useState<any>(null);
   const [showGroupDetails, setShowGroupDetails] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState<any>(null);
   const [groupMembers, setGroupMembers] = useState<any[]>([]);
+  const [showEditGroup, setShowEditGroup] = useState(false);
+  const [editingGroup, setEditingGroup] = useState<any>(null);
+  const [showGroupForm, setShowGroupForm] = useState(false);
   const [groupForm, setGroupForm] = useState({
     name: '',
     leaderId: '',
@@ -707,6 +709,51 @@ function GroupsSection({ groups, members, loadAdminData }: { groups: any[]; memb
     } catch (error) {
       console.error('Error fetching group members:', error);
       setGroupMembers([]);
+    }
+  };
+
+  const handleEditGroup = (group: any) => {
+    setEditingGroup(group);
+    setGroupForm({
+      name: group.name || '',
+      leaderId: group.leader_id || '',
+      monthlyContribution: group.monthly_contribution || '',
+      foundedDate: group.founded_date ? group.founded_date.split('T')[0] : new Date().toISOString().split('T')[0]
+    });
+    setShowEditGroup(true);
+  };
+
+  const handleUpdateGroup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const response = await fetch('/api/admin/groups', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: editingGroup.id,
+          name: groupForm.name,
+          leaderId: groupForm.leaderId || null,
+          monthlyContribution: parseFloat(groupForm.monthlyContribution),
+          status: editingGroup.status
+        }),
+      });
+
+      if (response.ok) {
+        const updatedGroup = await response.json();
+        alert('Kundi limebadilishwa kwa mafanikio!');
+        setShowEditGroup(false);
+        setShowGroupDetails(false);
+        loadAdminData(); // Refresh the data
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || 'Hitilafu imetokea wakati wa kubadilisha kundi.');
+      }
+    } catch (error) {
+      console.error('Error updating group:', error);
+      alert('Hitilafu imetokea wakati wa kubadilisha kundi.');
     }
   };
 
@@ -1002,10 +1049,99 @@ function GroupsSection({ groups, members, loadAdminData }: { groups: any[]; memb
                 >
                   Funga
                 </button>
-                <button className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors duration-200">
+                <button 
+                  onClick={() => handleEditGroup(selectedGroup)}
+                  className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors duration-200"
+                >
                   Hariri Kundi
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Group Modal */}
+      {showEditGroup && editingGroup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-900">Hariri Kundi</h2>
+                <button
+                  onClick={() => setShowEditGroup(false)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <form onSubmit={handleUpdateGroup} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">Jina la Kundi</label>
+                  <input
+                    type="text"
+                    value={groupForm.name}
+                    onChange={(e) => setGroupForm({...groupForm, name: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">Kiongozi</label>
+                  <select
+                    value={groupForm.leaderId}
+                    onChange={(e) => setGroupForm({...groupForm, leaderId: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  >
+                    <option value="">Chagua Kiongozi</option>
+                    {members.map((member) => (
+                      <option key={member.id} value={member.id}>
+                        {member.full_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">Mchango wa Kila Mwezi (TSH)</label>
+                  <input
+                    type="number"
+                    value={groupForm.monthlyContribution}
+                    onChange={(e) => setGroupForm({...groupForm, monthlyContribution: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">Tarehe ya Kuanzishwa</label>
+                  <input
+                    type="date"
+                    value={groupForm.foundedDate}
+                    onChange={(e) => setGroupForm({...groupForm, foundedDate: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    required
+                  />
+                </div>
+                
+                <div className="flex space-x-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditGroup(false)}
+                    className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors duration-200"
+                  >
+                    Ghairi
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors duration-200"
+                  >
+                    Badilisha
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>
