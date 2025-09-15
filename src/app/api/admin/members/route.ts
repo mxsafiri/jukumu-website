@@ -64,38 +64,81 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { id, status, groupId } = body;
     
+    console.log('PUT request received:', { id, status, groupId });
+    
+    if (!id) {
+      return NextResponse.json({ error: 'Member ID is required' }, { status: 400 });
+    }
+    
     const client = await pool.connect();
     
-    // Update member status
-    if (status) {
-      await client.query(
-        'UPDATE members SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
-        [status, id]
-      );
-    }
-    
-    // Add member to group
-    if (groupId) {
-      // First check if member is already in this group
-      const existingMembership = await client.query(
-        'SELECT id FROM group_members WHERE group_id = $1 AND member_id = $2',
-        [groupId, id]
-      );
+    try {
+      // Update member status
+      if (status) {
+        console.log('Updating member status:', { id, status });
+        await client.query(
+          'UPDATE members SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+          [status, id]
+        );
+      }
       
-      if (existingMembership.rows.length === 0) {
-        await client.query(`
+      // Add member to group
+      if (groupId) {
+        console.log('Adding member to group:', { memberId: id, groupId });
+        
+        // Verify the group exists
+        const groupCheck = await client.query('SELECT id FROM groups WHERE id = $1', [groupId]);
+        if (groupCheck.rows.length === 0) {
+          client.release();
+          return NextResponse.json({ error: 'Kundi halipo. Chagua kundi sahihi.' }, { status: 400 });
+        }
+        
+        // Verify the member exists
+        const memberCheck = await client.query('SELECT id FROM members WHERE id = $1', [id]);
+        if (memberCheck.rows.length === 0) {
+          client.release();
+          return NextResponse.json({ error: 'Mwanachama hapatikani.' }, { status: 400 });
+        }
+        
+        // Check if member is already in this group
+        const existingMembership = await client.query(
+          'SELECT id FROM group_members WHERE group_id = $1 AND member_id = $2',
+          [groupId, id]
+        );
+        
+        if (existingMembership.rows.length > 0) {
+          client.release();
+          return NextResponse.json({ error: 'Mwanachama tayari yupo kwenye kundi hili.' }, { status: 400 });
+        }
+        
+        // Insert the member into the group
+        const insertResult = await client.query(`
           INSERT INTO group_members (group_id, member_id, joined_date, role, status)
           VALUES ($1, $2, CURRENT_DATE, 'member', 'active')
+          RETURNING *
         `, [groupId, id]);
+        
+        console.log('Member added to group successfully:', insertResult.rows[0]);
       }
+      
+      client.release();
+      
+      const successMessage = groupId ? 'Mwanachama ameongezwa kwenye kundi kwa mafanikio!' : 'Mabadiliko yamehifadhiwa kwa mafanikio!';
+      return NextResponse.json({ 
+        success: true, 
+        message: successMessage,
+        data: { memberId: id, groupId, status }
+      });
+      
+    } catch (dbError) {
+      client.release();
+      throw dbError;
     }
-    
-    client.release();
-    
-    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Database error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Hitilafu imetokea wakati wa kubadilisha taarifa za mwanachama. Jaribu tena.'
+    }, { status: 500 });
   }
 }
 

@@ -384,6 +384,8 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
 
   const handleAddToGroup = async (memberId: number, groupId: number) => {
     try {
+      console.log('Adding member to group:', { memberId, groupId });
+      
       const response = await fetch('/api/admin/members', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -391,16 +393,18 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
       });
       
       const data = await response.json();
+      console.log('API response:', data);
       
       if (response.ok && data.success) {
         loadAdminData();
-        alert('Mwanachama ameongezwa kwenye kundi kwa mafanikio!');
+        alert(data.message || 'Mwanachama ameongezwa kwenye kundi kwa mafanikio!');
       } else {
+        console.error('API error:', data);
         alert(data.error || 'Hitilafu imetokea wakati wa kuongeza mwanachama kwenye kundi.');
       }
     } catch (error) {
-      console.error('Error adding member to group:', error);
-      alert('Hitilafu imetokea. Jaribu tena.');
+      console.error('Network error adding member to group:', error);
+      alert('Hitilafu ya mtandao. Hakikisha una muunganisho wa mtandao na jaribu tena.');
     }
   };
 
