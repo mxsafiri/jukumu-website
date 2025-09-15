@@ -124,7 +124,10 @@ export default function AdminDashboard() {
       const joinRequestsResponse = await fetch('/api/admin/join-requests');
       if (joinRequestsResponse.ok) {
         const joinRequestsData = await joinRequestsResponse.json();
+        console.log('Join requests data loaded:', joinRequestsData);
         setJoinRequests(joinRequestsData.requests || []);
+      } else {
+        console.error('Failed to load join requests:', joinRequestsResponse.status);
       }
     } catch (error) {
       console.error('Error loading admin data:', error);
@@ -1838,6 +1841,8 @@ function ContentSection({ educationalContent, user, loadAdminData }: { education
 
 function JoinRequestsSection({ joinRequests, loadAdminData }: { joinRequests: any[]; loadAdminData: () => void }) {
   const [processingRequest, setProcessingRequest] = useState<number | null>(null);
+  
+  console.log('JoinRequestsSection received:', joinRequests);
 
   const handleApproveRequest = async (requestId: number) => {
     setProcessingRequest(requestId);
