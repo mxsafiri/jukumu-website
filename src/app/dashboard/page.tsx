@@ -728,50 +728,9 @@ function GroupsSection({ groups, members, loadAdminData }: { groups: any[]; memb
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {groups.length > 0 ? (
-          groups.map((group) => (
-            <div key={group.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow duration-200">
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">{group.name}</h3>
-                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                  group.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                }`}>
-                  {group.status === 'active' ? 'Hai' : 'Inasubiri'}
-                </span>
-              </div>
-              
-              <div className="space-y-2 text-sm text-gray-600 mb-4">
-                <p><strong>Wanachama:</strong> {group.member_count || 0}</p>
-                <p><strong>Kiongozi:</strong> {group.leader_name || 'Hakuna'}</p>
-                <p><strong>Uwekezaji:</strong> TSH {parseFloat(group.total_investment || 0).toLocaleString()}</p>
-                <p><strong>Mchango wa Kila Mwezi:</strong> TSH {parseFloat(group.monthly_contribution || 0).toLocaleString()}</p>
-              </div>
-              
-              <div className="flex space-x-2">
-                <button className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700 transition-colors duration-200">
-                  Angalia
-                </button>
-                <button className="flex-1 bg-gray-600 text-white px-3 py-2 rounded text-sm hover:bg-gray-700 transition-colors duration-200">
-                  Hariri
-                </button>
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="col-span-full text-center py-12">
-            <div className="text-gray-500">
-              <UserGroupIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-              <p className="text-lg font-medium">Hakuna vikundi bado</p>
-              <p className="text-sm mt-1">Vikundi vitaonekana hapa baada ya kuanzishwa</p>
-            </div>
-          </div>
-        )}
-      </div>
-
       {/* Group Creation Form Modal */}
       {showGroupForm && (
-        <div className="mt-6 bg-white rounded-lg shadow p-6">
+        <div className="mb-6 bg-white rounded-lg shadow p-6 border border-orange-200">
           <h3 className="text-lg font-semibold mb-4">Anzisha Kundi Jipya</h3>
           <form onSubmit={handleCreateGroup} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -849,6 +808,48 @@ function GroupsSection({ groups, members, loadAdminData }: { groups: any[]; memb
           </form>
         </div>
       )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {groups.length > 0 ? (
+          groups.map((group) => (
+            <div key={group.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow duration-200">
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">{group.name}</h3>
+                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                  group.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {group.status === 'active' ? 'Hai' : 'Inasubiri'}
+                </span>
+              </div>
+              
+              <div className="space-y-2 text-sm text-gray-600 mb-4">
+                <p><strong>Wanachama:</strong> {group.member_count || 0}</p>
+                <p><strong>Kiongozi:</strong> {group.leader_name || 'Hakuna'}</p>
+                <p><strong>Uwekezaji:</strong> TSH {parseFloat(group.total_investment || 0).toLocaleString()}</p>
+                <p><strong>Mchango wa Kila Mwezi:</strong> TSH {parseFloat(group.monthly_contribution || 0).toLocaleString()}</p>
+              </div>
+              
+              <div className="flex space-x-2">
+                <button className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700 transition-colors duration-200">
+                  Angalia
+                </button>
+                <button className="flex-1 bg-gray-600 text-white px-3 py-2 rounded text-sm hover:bg-gray-700 transition-colors duration-200">
+                  Hariri
+                </button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="col-span-full text-center py-12">
+            <div className="text-gray-500">
+              <UserGroupIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+              <p className="text-lg font-medium">Hakuna vikundi bado</p>
+              <p className="text-sm mt-1">Vikundi vitaonekana hapa baada ya kuanzishwa</p>
+            </div>
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }
