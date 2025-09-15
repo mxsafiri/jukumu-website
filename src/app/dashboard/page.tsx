@@ -21,6 +21,7 @@ export default function AdminDashboard() {
   const [investments, setInvestments] = useState<any[]>([]);
   const [educationalContent, setEducationalContent] = useState<any[]>([]);
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
+  const [joinRequests, setJoinRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   // Force cache invalidation - admin dashboard with live data
 
@@ -109,18 +110,21 @@ export default function AdminDashboard() {
       const contentResponse = await fetch(`/api/educational-content?includeUnpublished=true&_t=${timestamp}`, {
         cache: 'no-store'
       });
-      if (contentResponse.ok) {
-        const contentData = await contentResponse.json();
-        setEducationalContent(contentData);
-      }
+      const contentData = await contentResponse.json();
+      setEducationalContent(contentData);
       
       // Load recent activities
-      const activitiesResponse = await fetch(`/api/admin/activities${cacheParams}`, {
-        cache: 'no-store'
-      });
+      const activitiesResponse = await fetch('/api/admin/activities');
       if (activitiesResponse.ok) {
         const activitiesData = await activitiesResponse.json();
         setRecentActivities(activitiesData);
+      }
+      
+      // Load join requests
+      const joinRequestsResponse = await fetch('/api/admin/join-requests');
+      if (joinRequestsResponse.ok) {
+        const joinRequestsData = await joinRequestsResponse.json();
+        setJoinRequests(joinRequestsData.requests || []);
       }
     } catch (error) {
       console.error('Error loading admin data:', error);
@@ -149,6 +153,7 @@ export default function AdminDashboard() {
     { id: 'overview', name: 'Muhtasari', icon: ChartBarIcon },
     { id: 'members', name: 'Wanachama', icon: UsersIcon },
     { name: 'Vikundi', id: 'groups', icon: UserGroupIcon },
+    { name: 'Maombi ya Kujiunga', id: 'join-requests', icon: UserGroupIcon },
     { name: 'Uwekezaji', id: 'investments', icon: CurrencyDollarIcon },
     { name: 'Mafunzo', id: 'content', icon: BookOpenIcon },
     { name: 'Ripoti', id: 'reports', icon: DocumentTextIcon },
@@ -162,7 +167,9 @@ export default function AdminDashboard() {
       case 'members':
         return <MembersSection members={members} groups={groups} loadAdminData={loadAdminData} />;
       case 'groups':
-        return <GroupsSection groups={groups} members={members} loadAdminData={loadAdminData} />;
+        return <GroupsSection groups={groups} loadAdminData={loadAdminData} />;
+      case 'join-requests':
+        return <JoinRequestsSection joinRequests={joinRequests} loadAdminData={loadAdminData} />;
       case 'investments':
         return <InvestmentsSection investments={investments} groups={groups} loadAdminData={loadAdminData} />;
       case 'content':
@@ -666,12 +673,14 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
   );
 }
 
-function GroupsSection({ groups, members, loadAdminData }: { groups: any[]; members: any[]; loadAdminData: () => void }) {
+function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData: () => void }) {
   const [showGroupDetails, setShowGroupDetails] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<any>(null);
-  const [groupMembers, setGroupMembers] = useState<any[]>([]);
-  const [showEditGroup, setShowEditGroup] = useState(false);
   const [editingGroup, setEditingGroup] = useState<any>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showEditGroup, setShowEditGroup] = useState(false);
+  const [groupMembers, setGroupMembers] = useState<any[]>([]);
+  const [members, setMembers] = useState<any[]>([]);
   const [showGroupForm, setShowGroupForm] = useState(false);
   const [groupForm, setGroupForm] = useState({
     name: '',
@@ -682,6 +691,7 @@ function GroupsSection({ groups, members, loadAdminData }: { groups: any[]; memb
 
   const handleViewGroup = async (group: any) => {
     setSelectedGroup(group);
+    setGroupMembers([]);
     setShowGroupDetails(true);
     
     // Fetch group members
@@ -1822,6 +1832,136 @@ function ContentSection({ educationalContent, user, loadAdminData }: { education
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+function JoinRequestsSection({ joinRequests, loadAdminData }: { joinRequests: any[]; loadAdminData: () => void }) {
+  const [processingRequest, setProcessingRequest] = useState<number | null>(null);
+
+  const handleApproveRequest = async (requestId: number) => {
+    setProcessingRequest(requestId);
+    try {
+      const response = await fetch('/api/admin/join-requests', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requestId,
+          action: 'approve',
+          reviewerId: 1,
+          notes: 'Approved by admin'
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        alert(data.message);
+        loadAdminData();
+      } else {
+        alert(data.error || 'Hitilafu imetokea');
+      }
+    } catch (error) {
+      console.error('Error approving request:', error);
+      alert('Hitilafu imetokea wakati wa kukubali ombi');
+    } finally {
+      setProcessingRequest(null);
+    }
+  };
+
+  const handleRejectRequest = async (requestId: number) => {
+    const reason = prompt('Eleza sababu ya kukataa ombi (si lazima):');
+    
+    setProcessingRequest(requestId);
+    try {
+      const response = await fetch('/api/admin/join-requests', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requestId,
+          action: 'reject',
+          reviewerId: 1,
+          notes: reason || 'Rejected by admin'
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        alert(data.message);
+        loadAdminData();
+      } else {
+        alert(data.error || 'Hitilafu imetokea');
+      }
+    } catch (error) {
+      console.error('Error rejecting request:', error);
+      alert('Hitilafu imetokea wakati wa kukataa ombi');
+    } finally {
+      setProcessingRequest(null);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm p-6">
+      <h2 className="text-2xl font-bold text-gray-900 mb-6">Maombi ya Kujiunga na Vikundi</h2>
+      
+      {joinRequests.length === 0 ? (
+        <div className="text-center py-8">
+          <UserGroupIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-600">Hakuna maombi ya kujiunga kwa sasa.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {joinRequests.map((request) => (
+            <div key={request.id} className="border border-gray-200 rounded-lg p-4">
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900">{request.member_name}</h3>
+                  <p className="text-sm text-gray-600">Anataka kujiunga na: <span className="font-medium">{request.group_name}</span></p>
+                  <p className="text-sm text-gray-600">Barua pepe: {request.member_email}</p>
+                  {request.member_phone && (
+                    <p className="text-sm text-gray-600">Simu: {request.member_phone}</p>
+                  )}
+                  <p className="text-xs text-gray-500 mt-2">
+                    Imetumwa: {new Date(request.created_at).toLocaleDateString('sw-TZ')}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-medium text-orange-600">
+                    Mchango: TSH {parseInt(request.monthly_contribution).toLocaleString()}/mwezi
+                  </p>
+                  <p className="text-sm text-gray-600">Kiongozi: {request.leader_name || 'Hajaainishwa'}</p>
+                </div>
+              </div>
+              
+              {request.message && (
+                <div className="mb-4 p-3 bg-gray-50 rounded-md">
+                  <p className="text-sm text-gray-700">
+                    <span className="font-medium">Ujumbe:</span> {request.message}
+                  </p>
+                </div>
+              )}
+              
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => handleApproveRequest(request.id)}
+                  disabled={processingRequest === request.id}
+                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                >
+                  {processingRequest === request.id ? 'Inakubali...' : 'Kubali'}
+                </button>
+                <button
+                  onClick={() => handleRejectRequest(request.id)}
+                  disabled={processingRequest === request.id}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                >
+                  {processingRequest === request.id ? 'Inakataa...' : 'Kataa'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
