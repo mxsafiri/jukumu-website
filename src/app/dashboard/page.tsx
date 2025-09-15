@@ -683,12 +683,32 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
 
 function GroupsSection({ groups, members, loadAdminData }: { groups: any[]; members: any[]; loadAdminData: () => void }) {
   const [showGroupForm, setShowGroupForm] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState<any>(null);
+  const [showGroupDetails, setShowGroupDetails] = useState(false);
+  const [groupMembers, setGroupMembers] = useState<any[]>([]);
   const [groupForm, setGroupForm] = useState({
     name: '',
     leaderId: '',
     monthlyContribution: '',
     foundedDate: new Date().toISOString().split('T')[0]
   });
+
+  const handleViewGroup = async (group: any) => {
+    setSelectedGroup(group);
+    setShowGroupDetails(true);
+    
+    // Fetch group members
+    try {
+      const response = await fetch(`/api/admin/groups/${group.id}/members`);
+      if (response.ok) {
+        const membersData = await response.json();
+        setGroupMembers(membersData);
+      }
+    } catch (error) {
+      console.error('Error fetching group members:', error);
+      setGroupMembers([]);
+    }
+  };
 
   const handleCreateGroup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -830,7 +850,10 @@ function GroupsSection({ groups, members, loadAdminData }: { groups: any[]; memb
               </div>
               
               <div className="flex space-x-2">
-                <button className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700 transition-colors duration-200">
+                <button 
+                  onClick={() => handleViewGroup(group)}
+                  className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700 transition-colors duration-200"
+                >
                   Angalia
                 </button>
                 <button className="flex-1 bg-gray-600 text-white px-3 py-2 rounded text-sm hover:bg-gray-700 transition-colors duration-200">
@@ -849,6 +872,144 @@ function GroupsSection({ groups, members, loadAdminData }: { groups: any[]; memb
           </div>
         )}
       </div>
+
+      {/* Group Details Modal */}
+      {showGroupDetails && selectedGroup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              {/* Header */}
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">{selectedGroup.name}</h2>
+                  <p className="text-gray-600">Maelezo ya kundi</p>
+                </div>
+                <button
+                  onClick={() => setShowGroupDetails(false)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Group Stats */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h3 className="text-sm font-medium text-blue-900">Wanachama</h3>
+                  <p className="text-2xl font-bold text-blue-600">{selectedGroup.member_count || 0}</p>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <h3 className="text-sm font-medium text-green-900">Mchango wa Mwezi</h3>
+                  <p className="text-lg font-bold text-green-600">TSH {parseFloat(selectedGroup.monthly_contribution || 0).toLocaleString()}</p>
+                </div>
+                <div className="bg-orange-50 p-4 rounded-lg">
+                  <h3 className="text-sm font-medium text-orange-900">Uwekezaji wa Jumla</h3>
+                  <p className="text-lg font-bold text-orange-600">TSH {parseFloat(selectedGroup.total_investment || 0).toLocaleString()}</p>
+                </div>
+                <div className="bg-purple-50 p-4 rounded-lg">
+                  <h3 className="text-sm font-medium text-purple-900">Hali</h3>
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                    selectedGroup.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {selectedGroup.status === 'active' ? 'Hai' : 'Inasubiri'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Group Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Maelezo ya Kundi</h3>
+                  <div className="space-y-2 text-sm">
+                    <p><strong>Kiongozi:</strong> {selectedGroup.leader_name || 'Hakuna'}</p>
+                    <p><strong>Tarehe ya Kuanzishwa:</strong> {selectedGroup.founded_date ? new Date(selectedGroup.founded_date).toLocaleDateString('sw-TZ') : 'Haijajulikana'}</p>
+                    <p><strong>Tarehe ya Kutengenezwa:</strong> {new Date(selectedGroup.created_at).toLocaleDateString('sw-TZ')}</p>
+                  </div>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Takwimu za Fedha</h3>
+                  <div className="space-y-2 text-sm">
+                    <p><strong>Mchango wa Kila Mwezi:</strong> TSH {parseFloat(selectedGroup.monthly_contribution || 0).toLocaleString()}</p>
+                    <p><strong>Uwekezaji wa Jumla:</strong> TSH {parseFloat(selectedGroup.total_investment || 0).toLocaleString()}</p>
+                    <p><strong>Jumla ya Michango:</strong> TSH {(parseFloat(selectedGroup.monthly_contribution || 0) * (selectedGroup.member_count || 0)).toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Group Members */}
+              <div className="bg-white border border-gray-200 rounded-lg">
+                <div className="px-4 py-3 border-b border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900">Wanachama wa Kundi</h3>
+                </div>
+                <div className="p-4">
+                  {groupMembers.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jina</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nafasi</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tarehe ya Kujiunge</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hali</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {groupMembers.map((member) => (
+                            <tr key={member.id} className="hover:bg-gray-50">
+                              <td className="px-4 py-2 whitespace-nowrap">
+                                <div>
+                                  <div className="text-sm font-medium text-gray-900">{member.full_name}</div>
+                                  <div className="text-sm text-gray-500">{member.email}</div>
+                                </div>
+                              </td>
+                              <td className="px-4 py-2 whitespace-nowrap">
+                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                  member.role === 'leader' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
+                                }`}>
+                                  {member.role === 'leader' ? 'Kiongozi' : 'Mwanachama'}
+                                </span>
+                              </td>
+                              <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                                {member.joined_date ? new Date(member.joined_date).toLocaleDateString('sw-TZ') : 'Haijajulikana'}
+                              </td>
+                              <td className="px-4 py-2 whitespace-nowrap">
+                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                  member.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                }`}>
+                                  {member.status === 'active' ? 'Hai' : 'Haifanyi kazi'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <UsersIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                      <p className="text-gray-500">Hakuna wanachama bado</p>
+                      <p className="text-sm text-gray-400 mt-1">Wanachama wataonekana hapa baada ya kuongezwa kwenye kundi</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-4 mt-6">
+                <button
+                  onClick={() => setShowGroupDetails(false)}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors duration-200"
+                >
+                  Funga
+                </button>
+                <button className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors duration-200">
+                  Hariri Kundi
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
