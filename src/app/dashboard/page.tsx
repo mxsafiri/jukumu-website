@@ -569,7 +569,7 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
                   type="text"
                   value={memberForm.fullName}
                   onChange={(e) => setMemberForm({...memberForm, fullName: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                   required
                 />
               </div>
@@ -581,7 +581,7 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
                   type="email"
                   value={memberForm.email}
                   onChange={(e) => setMemberForm({...memberForm, email: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                 />
               </div>
               <div>
@@ -592,7 +592,7 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
                   type="tel"
                   value={memberForm.phone}
                   onChange={(e) => setMemberForm({...memberForm, phone: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                 />
               </div>
               <div>
@@ -603,7 +603,7 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
                   type="text"
                   value={memberForm.location}
                   onChange={(e) => setMemberForm({...memberForm, location: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                   required
                 />
               </div>
@@ -614,7 +614,7 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
                 <select
                   value={memberForm.businessType}
                   onChange={(e) => setMemberForm({...memberForm, businessType: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                   required
                 >
                   <option value="">Chagua aina ya biashara</option>
@@ -634,7 +634,7 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
                 <select
                   value={memberForm.gender}
                   onChange={(e) => setMemberForm({...memberForm, gender: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                   required
                 >
                   <option value="">Chagua jinsia</option>
@@ -652,7 +652,7 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
                 type="number"
                 value={memberForm.age}
                 onChange={(e) => setMemberForm({...memberForm, age: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                 min="18"
                 max="100"
                 required
@@ -783,7 +783,7 @@ function GroupsSection({ groups, members, loadAdminData }: { groups: any[]; memb
                   type="text"
                   value={groupForm.name}
                   onChange={(e) => setGroupForm({...groupForm, name: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900 placeholder-gray-500"
                   placeholder="Ingiza jina la kundi"
                   required
                 />
@@ -795,7 +795,7 @@ function GroupsSection({ groups, members, loadAdminData }: { groups: any[]; memb
                 <select
                   value={groupForm.leaderId}
                   onChange={(e) => setGroupForm({...groupForm, leaderId: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900"
                 >
                   <option value="">Chagua kiongozi</option>
                   {members.filter(m => m.status === 'active').map(member => (
@@ -811,7 +811,7 @@ function GroupsSection({ groups, members, loadAdminData }: { groups: any[]; memb
                   type="number"
                   value={groupForm.monthlyContribution}
                   onChange={(e) => setGroupForm({...groupForm, monthlyContribution: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900 placeholder-gray-500"
                   placeholder="50000"
                   min="1000"
                   required
@@ -825,7 +825,7 @@ function GroupsSection({ groups, members, loadAdminData }: { groups: any[]; memb
                   type="date"
                   value={groupForm.foundedDate}
                   onChange={(e) => setGroupForm({...groupForm, foundedDate: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900"
                   required
                 />
               </div>
