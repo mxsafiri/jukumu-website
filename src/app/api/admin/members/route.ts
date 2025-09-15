@@ -76,11 +76,18 @@ export async function PUT(request: NextRequest) {
     
     // Add member to group
     if (groupId) {
-      await client.query(`
-        INSERT INTO group_members (group_id, member_id, joined_date, role, status)
-        VALUES ($1, $2, CURRENT_DATE, 'member', 'active')
-        ON CONFLICT (group_id, member_id) DO NOTHING
-      `, [groupId, id]);
+      // First check if member is already in this group
+      const existingMembership = await client.query(
+        'SELECT id FROM group_members WHERE group_id = $1 AND member_id = $2',
+        [groupId, id]
+      );
+      
+      if (existingMembership.rows.length === 0) {
+        await client.query(`
+          INSERT INTO group_members (group_id, member_id, joined_date, role, status)
+          VALUES ($1, $2, CURRENT_DATE, 'member', 'active')
+        `, [groupId, id]);
+      }
     }
     
     client.release();

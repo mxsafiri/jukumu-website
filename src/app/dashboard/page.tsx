@@ -384,14 +384,23 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
 
   const handleAddToGroup = async (memberId: number, groupId: number) => {
     try {
-      await fetch('/api/admin/members', {
+      const response = await fetch('/api/admin/members', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: memberId, groupId })
       });
-      loadAdminData();
+      
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        loadAdminData();
+        alert('Mwanachama ameongezwa kwenye kundi kwa mafanikio!');
+      } else {
+        alert(data.error || 'Hitilafu imetokea wakati wa kuongeza mwanachama kwenye kundi.');
+      }
     } catch (error) {
       console.error('Error adding member to group:', error);
+      alert('Hitilafu imetokea. Jaribu tena.');
     }
   };
 
@@ -684,16 +693,25 @@ function GroupsSection({ groups, members, loadAdminData }: { groups: any[]; memb
   const handleCreateGroup = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await fetch('/api/admin/groups', {
+      const response = await fetch('/api/admin/groups', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(groupForm)
       });
-      setShowGroupForm(false);
-      setGroupForm({ name: '', leaderId: '', monthlyContribution: '', foundedDate: new Date().toISOString().split('T')[0] });
-      loadAdminData();
+      
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        setShowGroupForm(false);
+        setGroupForm({ name: '', leaderId: '', monthlyContribution: '', foundedDate: new Date().toISOString().split('T')[0] });
+        loadAdminData();
+        alert(data.message || 'Kundi limeanzishwa kwa mafanikio!');
+      } else {
+        alert(data.error || 'Hitilafu imetokea wakati wa kuanzisha kundi.');
+      }
     } catch (error) {
       console.error('Error creating group:', error);
+      alert('Hitilafu imetokea. Hakikisha una muunganisho wa mtandao na jaribu tena.');
     }
   };
 
