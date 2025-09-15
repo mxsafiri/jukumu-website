@@ -74,30 +74,35 @@ export async function POST(request: NextRequest) {
         RETURNING *
       `, [memberId, groupId, message || '']);
 
-      // Create notification for group leader
+      // Try to create notification for group leader if exists (optional)
       const groupLeaderId = groupCheck.rows[0].leader_id;
       const memberName = memberCheck.rows[0].full_name;
       const groupName = groupCheck.rows[0].name;
       
       if (groupLeaderId) {
-        await client.query(`
-          SELECT create_notification($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        `, [
-          groupLeaderId, // user_id
-          'Ombi la Kujiunga na Kundi', // title
-          `${memberName} ametuma ombi la kujiunga na kundi lako "${groupName}". Angalia na ukubali au ukatae ombi hili.`, // message
-          'info', // type
-          'group', // category
-          '/dashboard', // action_url
-          'Angalia Ombi', // action_text
-          JSON.stringify({ 
-            group_id: groupId, 
-            member_id: memberId, 
-            request_id: result.rows[0].id,
-            action: 'review_join_request' 
-          }), // metadata
-          null // expires_at
-        ]);
+        try {
+          await client.query(`
+            SELECT create_notification($1, $2, $3, $4, $5, $6, $7, $8, $9)
+          `, [
+            groupLeaderId, // user_id
+            'Ombi la Kujiunga na Kundi', // title
+            `${memberName} ametuma ombi la kujiunga na kundi lako "${groupName}". Angalia na ukubali au ukatae ombi hili.`, // message
+            'info', // type
+            'group', // category
+            '/dashboard', // action_url
+            'Angalia Ombi', // action_text
+            JSON.stringify({ 
+              group_id: groupId, 
+              member_id: memberId, 
+              request_id: result.rows[0].id,
+              action: 'review_join_request' 
+            }), // metadata
+            null // expires_at
+          ]);
+        } catch (notificationError) {
+          // Log notification error but don't fail the join request
+          console.warn('Failed to create notification:', notificationError);
+        }
       }
 
       client.release();
