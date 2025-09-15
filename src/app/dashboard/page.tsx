@@ -920,18 +920,18 @@ function GroupsSection({ groups, members, loadAdminData }: { groups: any[]; memb
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">Maelezo ya Kundi</h3>
-                  <div className="space-y-2 text-sm">
-                    <p><strong>Kiongozi:</strong> {selectedGroup.leader_name || 'Hakuna'}</p>
-                    <p><strong>Tarehe ya Kuanzishwa:</strong> {selectedGroup.founded_date ? new Date(selectedGroup.founded_date).toLocaleDateString('sw-TZ') : 'Haijajulikana'}</p>
-                    <p><strong>Tarehe ya Kutengenezwa:</strong> {new Date(selectedGroup.created_at).toLocaleDateString('sw-TZ')}</p>
+                  <div className="space-y-2 text-sm text-gray-900">
+                    <p className="text-gray-900"><strong className="text-gray-900">Kiongozi:</strong> {selectedGroup.leader_name || 'Hakuna'}</p>
+                    <p className="text-gray-900"><strong className="text-gray-900">Tarehe ya Kuanzishwa:</strong> {selectedGroup.founded_date ? new Date(selectedGroup.founded_date).toLocaleDateString('sw-TZ') : 'Haijajulikana'}</p>
+                    <p className="text-gray-900"><strong className="text-gray-900">Tarehe ya Kutengenezwa:</strong> {new Date(selectedGroup.created_at).toLocaleDateString('sw-TZ')}</p>
                   </div>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">Takwimu za Fedha</h3>
-                  <div className="space-y-2 text-sm">
-                    <p><strong>Mchango wa Kila Mwezi:</strong> TSH {parseFloat(selectedGroup.monthly_contribution || 0).toLocaleString()}</p>
-                    <p><strong>Uwekezaji wa Jumla:</strong> TSH {parseFloat(selectedGroup.total_investment || 0).toLocaleString()}</p>
-                    <p><strong>Jumla ya Michango:</strong> TSH {(parseFloat(selectedGroup.monthly_contribution || 0) * (selectedGroup.member_count || 0)).toLocaleString()}</p>
+                  <div className="space-y-2 text-sm text-gray-900">
+                    <p className="text-gray-900"><strong className="text-gray-900">Mchango wa Kila Mwezi:</strong> TSH {parseFloat(selectedGroup.monthly_contribution || 0).toLocaleString()}</p>
+                    <p className="text-gray-900"><strong className="text-gray-900">Uwekezaji wa Jumla:</strong> TSH {parseFloat(selectedGroup.total_investment || 0).toLocaleString()}</p>
+                    <p className="text-gray-900"><strong className="text-gray-900">Jumla ya Michango:</strong> TSH {(parseFloat(selectedGroup.monthly_contribution || 0) * (selectedGroup.member_count || 0)).toLocaleString()}</p>
                   </div>
                 </div>
               </div>
