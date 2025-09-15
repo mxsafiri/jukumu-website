@@ -119,6 +119,27 @@ export async function PUT(request: NextRequest) {
         `, [groupId, id]);
         
         console.log('Member added to group successfully:', insertResult.rows[0]);
+        
+        // Get group and member details for notification
+        const groupDetails = await client.query('SELECT name FROM groups WHERE id = $1', [groupId]);
+        const memberDetails = await client.query('SELECT full_name FROM members WHERE id = $1', [id]);
+        
+        if (groupDetails.rows.length > 0 && memberDetails.rows.length > 0) {
+          // Create notification for the member
+          await client.query(`
+            SELECT create_notification($1, $2, $3, $4, $5, $6, $7, $8, $9)
+          `, [
+            id, // user_id
+            'Umeongezwa kwenye Kundi!', // title
+            `Hongera! Umeongezwa kwenye kundi la "${groupDetails.rows[0].name}". Anza kushiriki na wanachama wengine na uongeze mchango wako.`, // message
+            'success', // type
+            'group', // category
+            '/member-dashboard', // action_url
+            'Angalia Kundi', // action_text
+            JSON.stringify({ group_id: groupId, action: 'view_group' }), // metadata
+            null // expires_at
+          ]);
+        }
       }
       
       client.release();

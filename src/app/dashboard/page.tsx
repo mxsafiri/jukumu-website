@@ -4,20 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
-  ChartBarIcon,
-  UsersIcon,
-  UserGroupIcon,
-  CurrencyDollarIcon,
-  DocumentTextIcon,
-  CogIcon,
-  ArrowRightOnRectangleIcon,
-  PlusIcon,
-  EyeIcon,
-  PencilIcon,
-  TrashIcon,
-  AcademicCapIcon,
-  BookOpenIcon
+  UserGroupIcon, PlusIcon, UsersIcon, CurrencyDollarIcon, ChartBarIcon, BookOpenIcon,
+  DocumentTextIcon, CogIcon, ArrowRightOnRectangleIcon, EyeIcon, PencilIcon, TrashIcon
 } from '@heroicons/react/24/outline';
+import NotificationCenter from '@/components/NotificationCenter';
 import GrowthChart from '@/components/GrowthChart';
 
 export default function AdminDashboard() {
@@ -160,7 +150,7 @@ export default function AdminDashboard() {
     { id: 'members', name: 'Wanachama', icon: UsersIcon },
     { name: 'Vikundi', id: 'groups', icon: UserGroupIcon },
     { name: 'Uwekezaji', id: 'investments', icon: CurrencyDollarIcon },
-    { name: 'Mafunzo', id: 'content', icon: AcademicCapIcon },
+    { name: 'Mafunzo', id: 'content', icon: BookOpenIcon },
     { name: 'Ripoti', id: 'reports', icon: DocumentTextIcon },
     { name: 'Mipangilio', id: 'settings', icon: CogIcon },
   ];
@@ -188,29 +178,20 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-orange-500 to-red-500">
-                <span className="text-lg font-bold text-white">J</span>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">JUKUMU Admin</h1>
-                <p className="text-sm text-gray-600">Karibu, {user?.fullName || user?.email}</p>
-              </div>
+          <div className="flex justify-between items-center py-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Dashibodi ya Msimamizi</h1>
+              <p className="mt-1 text-sm text-gray-500">Simamia mfumo wa JUKUMU</p>
             </div>
-            <button
-              onClick={handleLogout}
-              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors duration-200"
-            >
-              <ArrowRightOnRectangleIcon className="h-5 w-5" />
-              <span>Toka</span>
-            </button>
+            <div className="flex items-center space-x-4">
+              <NotificationCenter userId={1} className="" />
+              <span className="text-sm text-gray-500">Karibu, Msimamizi</span>
+            </div>
           </div>
         </div>
-      </header>
+      </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
