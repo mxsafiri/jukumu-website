@@ -19,6 +19,7 @@ export default function MemberDashboard() {
   const { } = useLanguage();
   const router = useRouter();
   const [user, setUser] = useState<{id?: number; fullName?: string; email: string; role?: string} | null>(null);
+  const [memberInfo, setMemberInfo] = useState<{id?: number; fullName?: string; email?: string} | null>(null);
   const [activeSection, setActiveSection] = useState('overview');
   const [memberProfile, setMemberProfile] = useState<any>(null);
   const [memberInvestments, setMemberInvestments] = useState<any[]>([]);
@@ -55,6 +56,12 @@ export default function MemberDashboard() {
         console.log('User-Member mapping:', data);
         
         if (data.hasMemberProfile) {
+          // Store the correct member information
+          setMemberInfo({
+            id: data.member.id,
+            fullName: data.member.full_name,
+            email: data.member.email
+          });
           // Load member data using the correct member ID
           loadMemberData(userId, data.member.id);
         } else {
@@ -510,11 +517,12 @@ function MyGroupSection({ memberProfile }: { memberProfile: any }) {
     
     setLoading(true);
     try {
-      const response = await fetch('/api/groups/join-request', {
+      // Use the new API that properly maps user ID to member ID
+      const response = await fetch('/api/groups/join-request-by-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          memberId: user.id,
+          userId: user.id,  // Send user ID, not member ID
           groupId,
           message: joinMessage
         })
@@ -526,7 +534,9 @@ function MyGroupSection({ memberProfile }: { memberProfile: any }) {
         alert(data.message);
         setSelectedGroup(null);
         setJoinMessage('');
-        loadJoinRequests(user.id);
+        if (memberInfo?.id) {
+          loadJoinRequests(memberInfo.id);
+        }
       } else {
         alert(data.error || 'Hitilafu imetokea');
       }
