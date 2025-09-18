@@ -82,7 +82,8 @@ export default function ImpactSection() {
 
     const fetchEducationalContent = async () => {
       try {
-        const response = await fetch('/api/educational-content');
+        // Use the new public training API instead of educational-content
+        const response = await fetch('/api/public/training');
         if (response.ok) {
           const data = await response.json();
           // Take only the first 3 items for preview
@@ -92,10 +93,10 @@ export default function ImpactSection() {
             description: item.description,
             category: item.category,
             categoryColor: getCategoryColor(item.category),
-            duration: item.duration || 'Muda haujaainishwa',
-            participants: item.enrolled_count || 0,
+            duration: `${item.duration_hours}h • ${item.lesson_count} masomo`,
+            participants: 0, // We don't track enrollment for public view yet
             icon: getCategoryIcon(item.category),
-            image: item.image_url || '/PXL_20250618_095258793.PORTRAIT.jpg'
+            image: '/PXL_20250618_095258793.PORTRAIT.jpg' // Default training image
           }));
           setEducationalContent(previewContent);
         }
@@ -244,9 +245,12 @@ export default function ImpactSection() {
                       <UserGroupIcon className="h-4 w-4 mr-1" />
                       <span>{content.participants} wanafunzi</span>
                     </div>
-                    <button className="text-blue-600 hover:text-blue-700 font-semibold text-sm">
-                      Soma Zaidi →
-                    </button>
+                    <a 
+                      href="/login" 
+                      className="text-blue-600 hover:text-blue-700 font-semibold text-sm transition-colors"
+                    >
+                      Jisajili Kusoma →
+                    </a>
                   </div>
                 </div>
               </div>
@@ -254,10 +258,13 @@ export default function ImpactSection() {
           </div>
 
           <div className="text-center">
-            <button className="inline-flex items-center px-8 py-4 bg-blue-600 text-white font-semibold rounded-2xl hover:bg-blue-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1">
+            <a 
+              href="/login" 
+              className="inline-flex items-center px-8 py-4 bg-blue-600 text-white font-semibold rounded-2xl hover:bg-blue-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
+            >
               <AcademicCapIcon className="h-6 w-6 mr-3" />
-              Ona Mafunzo Yote
-            </button>
+              Jisajili Kuona Mafunzo Yote
+            </a>
           </div>
         </div>
 
