@@ -796,6 +796,63 @@ function MyInvestmentsSection({ memberInvestments }: { memberInvestments: any[] 
 }
 
 function LearningSection({ memberTraining, user }: { memberTraining: any[]; user: any }) {
+  const [selectedTraining, setSelectedTraining] = useState<any>(null);
+  const [trainingDetails, setTrainingDetails] = useState<any>(null);
+  const [currentLesson, setCurrentLesson] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleViewTraining = async (training: any) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/training/${training.id}?userId=${user?.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setSelectedTraining(training);
+        setTrainingDetails(data);
+        // Start with first lesson if available
+        if (data.lessons && data.lessons.length > 0) {
+          setCurrentLesson(data.lessons[0]);
+        }
+      } else {
+        alert('Hitilafu imetokea wakati wa kupakia mafunzo');
+      }
+    } catch (error) {
+      console.error('Error loading training:', error);
+      alert('Hitilafu imetokea wakati wa kupakia mafunzo');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLessonComplete = async (lessonId: number, completed: boolean) => {
+    try {
+      const response = await fetch('/api/training/lesson-progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user?.id, lessonId, completed })
+      });
+      
+      if (response.ok) {
+        // Update lesson status locally
+        if (trainingDetails) {
+          const updatedLessons = trainingDetails.lessons.map((lesson: any) => 
+            lesson.id === lessonId ? { ...lesson, completed } : lesson
+          );
+          setTrainingDetails({ ...trainingDetails, lessons: updatedLessons });
+        }
+        
+        if (completed) {
+          alert('Hongera! Umekamilisha somo hili.');
+        }
+      } else {
+        alert('Hitilafu imetokea wakati wa kusajili maendeleo');
+      }
+    } catch (error) {
+      console.error('Error updating lesson progress:', error);
+      alert('Hitilafu imetokea wakati wa kusajili maendeleo');
+    }
+  };
+
   const handleStartTraining = async (trainingId: number) => {
     try {
       await fetch('/api/members/training', {
@@ -824,6 +881,137 @@ function LearningSection({ memberTraining, user }: { memberTraining: any[]; user
     }
   };
   
+  // Show lesson viewer if training is selected
+  if (selectedTraining && trainingDetails) {
+    return (
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <button
+              onClick={() => {
+                setSelectedTraining(null);
+                setTrainingDetails(null);
+                setCurrentLesson(null);
+              }}
+              className="text-blue-600 hover:text-blue-800 mb-2 flex items-center"
+            >
+              ← Rudi kwenye Mafunzo
+            </button>
+            <h2 className="text-2xl font-bold text-gray-900">{selectedTraining.title}</h2>
+            <p className="text-gray-600">{selectedTraining.description}</p>
+          </div>
+          <div className="text-right">
+            <div className="text-sm text-gray-500">
+              Maendeleo: {trainingDetails.completedLessons}/{trainingDetails.totalLessons} masomo
+            </div>
+            <div className="w-32 bg-gray-200 rounded-full h-2 mt-1">
+              <div 
+                className="bg-blue-600 h-2 rounded-full" 
+                style={{ width: `${(trainingDetails.completedLessons / trainingDetails.totalLessons) * 100}%` }}
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Lessons Sidebar */}
+          <div className="lg:col-span-1">
+            <h3 className="font-semibold text-gray-900 mb-4">Masomo</h3>
+            <div className="space-y-2">
+              {trainingDetails.lessons.map((lesson: any, index: number) => (
+                <button
+                  key={lesson.id}
+                  onClick={() => setCurrentLesson(lesson)}
+                  className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                    currentLesson?.id === lesson.id
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium text-sm">{lesson.title}</div>
+                      <div className="text-xs text-gray-500">{lesson.duration_minutes} dakika</div>
+                    </div>
+                    {lesson.completed && (
+                      <span className="text-green-600 text-sm">✓</span>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Lesson Content */}
+          <div className="lg:col-span-3">
+            {currentLesson ? (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-semibold text-gray-900">{currentLesson.title}</h3>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-gray-500">{currentLesson.duration_minutes} dakika</span>
+                    <button
+                      onClick={() => handleLessonComplete(currentLesson.id, !currentLesson.completed)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                        currentLesson.completed
+                          ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                      }`}
+                    >
+                      {currentLesson.completed ? 'Umekamilisha ✓' : 'Kamilisha Somo'}
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="prose max-w-none">
+                  <div 
+                    className="text-gray-700 leading-relaxed whitespace-pre-wrap"
+                    dangerouslySetInnerHTML={{ __html: currentLesson.content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }}
+                  />
+                </div>
+
+                {/* Navigation */}
+                <div className="flex justify-between mt-8 pt-6 border-t">
+                  <button
+                    onClick={() => {
+                      const currentIndex = trainingDetails.lessons.findIndex((l: any) => l.id === currentLesson.id);
+                      if (currentIndex > 0) {
+                        setCurrentLesson(trainingDetails.lessons[currentIndex - 1]);
+                      }
+                    }}
+                    disabled={trainingDetails.lessons.findIndex((l: any) => l.id === currentLesson.id) === 0}
+                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    ← Somo la Awali
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      const currentIndex = trainingDetails.lessons.findIndex((l: any) => l.id === currentLesson.id);
+                      if (currentIndex < trainingDetails.lessons.length - 1) {
+                        setCurrentLesson(trainingDetails.lessons[currentIndex + 1]);
+                      }
+                    }}
+                    disabled={trainingDetails.lessons.findIndex((l: any) => l.id === currentLesson.id) === trainingDetails.lessons.length - 1}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Somo Linalofuata →
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <BookOpenIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600">Chagua somo kutoka upande wa kushoto kuanza kusoma.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show training modules list
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
       <h2 className="text-2xl font-bold text-gray-900 mb-6">Mafunzo</h2>
@@ -853,25 +1041,35 @@ function LearningSection({ memberTraining, user }: { memberTraining: any[]; user
                 <span>Muda: {training.duration_hours}h</span>
               </div>
               
-              {training.progress_status === 'completed' ? (
-                <div className="text-center py-2">
-                  <span className="text-green-600 font-medium">✓ Umekamilisha</span>
-                </div>
-              ) : training.progress_status === 'in_progress' ? (
+              <div className="flex space-x-2">
                 <button
-                  onClick={() => handleCompleteTraining(training.id)}
-                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  onClick={() => handleViewTraining(training)}
+                  disabled={loading}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
                 >
-                  Kamilisha Mafunzo
+                  {loading ? 'Inapakia...' : 'Angalia Masomo'}
                 </button>
-              ) : (
-                <button
-                  onClick={() => handleStartTraining(training.id)}
-                  className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
-                >
-                  Anza Mafunzo
-                </button>
-              )}
+                
+                {training.progress_status === 'completed' ? (
+                  <div className="flex items-center px-3 py-2 bg-green-100 text-green-800 rounded-lg">
+                    <span className="text-sm font-medium">✓ Umekamilisha</span>
+                  </div>
+                ) : training.progress_status === 'in_progress' ? (
+                  <button
+                    onClick={() => handleCompleteTraining(training.id)}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  >
+                    Kamilisha
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleStartTraining(training.id)}
+                    className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+                  >
+                    Anza
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>
