@@ -6,6 +6,21 @@ export async function GET() {
     const client = await pool.connect();
     
     try {
+      // First check if training_modules table exists and has data
+      const modulesCheck = await client.query('SELECT COUNT(*) FROM training_modules');
+      const moduleCount = parseInt(modulesCheck.rows[0].count);
+      
+      if (moduleCount === 0) {
+        // Insert basic training modules first
+        await client.query(`
+          INSERT INTO training_modules (title, description, duration_hours, category, level) VALUES
+          ('Uongozi wa Biashara', 'Jifunze jinsi ya kuongoza biashara yako kwa ufanisi', 2.0, 'Leadership', 'beginner'),
+          ('Utunzaji wa Fedha', 'Mafunzo ya jinsi ya kutunza na kupanga fedha za biashara', 1.5, 'Finance', 'beginner'),
+          ('Masoko na Uuzaji', 'Jinsi ya kupata na kuwashawishi wateja', 3.0, 'Marketing', 'intermediate')
+          ON CONFLICT DO NOTHING
+        `);
+      }
+      
       // Create training_lessons table
       await client.query(`
         CREATE TABLE IF NOT EXISTS training_lessons (
