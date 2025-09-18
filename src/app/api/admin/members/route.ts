@@ -24,10 +24,17 @@ export async function GET(request: NextRequest) {
         m.employee_count,
         m.status,
         m.created_at,
-        g.name as group_name,
-        gm.role as group_role
+        COALESCE(
+          STRING_AGG(g.name, ', ' ORDER BY g.name), 
+          'Hakuna kundi'
+        ) as group_names,
+        COALESCE(
+          STRING_AGG(gm.role, ', ' ORDER BY g.name), 
+          'Hakuna nafasi'
+        ) as group_roles,
+        COUNT(gm.id) as group_count
       FROM members m
-      LEFT JOIN group_members gm ON m.id = gm.member_id
+      LEFT JOIN group_members gm ON m.id = gm.member_id AND gm.status = 'active'
       LEFT JOIN groups g ON gm.group_id = g.id
       WHERE 1=1
     `;
@@ -47,7 +54,12 @@ export async function GET(request: NextRequest) {
       params.push(status);
     }
     
-    query += ` ORDER BY m.created_at DESC`;
+    query += ` 
+      GROUP BY m.id, m.full_name, m.email, m.phone, m.location, m.business_type, 
+               m.business_name, m.gender, m.age, m.monthly_revenue, m.employee_count, 
+               m.status, m.created_at
+      ORDER BY m.created_at DESC
+    `;
     
     const result = await client.query(query, params);
     client.release();

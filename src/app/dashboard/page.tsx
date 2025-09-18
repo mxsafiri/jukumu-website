@@ -544,7 +544,14 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{member.group_name || 'Hakuna kundi'}</div>
+                    <div className="text-sm text-gray-900">
+                      {member.group_names || 'Hakuna kundi'}
+                      {member.group_count > 0 && (
+                        <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          {member.group_count} {member.group_count === 1 ? 'kundi' : 'vikundi'}
+                        </span>
+                      )}
+                    </div>
                     <div className="text-sm text-gray-500">{member.business_type}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
