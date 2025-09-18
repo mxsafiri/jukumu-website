@@ -2135,9 +2135,19 @@ function JoinRequestsSection({ joinRequests, loadAdminData }: { joinRequests: an
         <div className="space-y-4">
           {joinRequests.map((request) => (
             <div key={request.id} className="border border-gray-200 rounded-lg p-4">
+              {/* Debug info - remove in production */}
+              {request.data_validation && request.data_validation !== 'OK' && (
+                <div className="mb-2 p-2 bg-red-100 border border-red-300 rounded text-xs text-red-700">
+                  ⚠️ Data Issue: {request.data_validation} | Request ID: {request.id} | Member ID: {request.member_id}
+                </div>
+              )}
+              
               <div className="flex justify-between items-start mb-4">
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900">{request.member_name}</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {request.member_name}
+                    <span className="text-xs text-gray-400 ml-2">(ID: {request.member_id})</span>
+                  </h3>
                   <p className="text-sm text-gray-600">Anataka kujiunga na: <span className="font-medium">{request.group_name}</span></p>
                   <p className="text-sm text-gray-600">Barua pepe: {request.member_email}</p>
                   {request.member_phone && (

@@ -9,14 +9,25 @@ export async function GET(request: NextRequest) {
     try {
       const result = await client.query(`
         SELECT 
-          jr.*,
+          jr.id,
+          jr.member_id,
+          jr.group_id,
+          jr.message,
+          jr.status,
+          jr.created_at,
           g.name as group_name,
           g.monthly_contribution,
           g.leader_id,
           m.full_name as member_name,
           m.email as member_email,
           m.phone as member_phone,
-          leader.full_name as leader_name
+          leader.full_name as leader_name,
+          -- Add validation fields to catch mismatches
+          CASE 
+            WHEN m.id != jr.member_id THEN 'MEMBER_ID_MISMATCH'
+            WHEN g.id != jr.group_id THEN 'GROUP_ID_MISMATCH'
+            ELSE 'OK'
+          END as data_validation
         FROM join_requests jr
         JOIN groups g ON jr.group_id = g.id
         JOIN members m ON jr.member_id = m.id
