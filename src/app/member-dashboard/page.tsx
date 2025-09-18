@@ -96,11 +96,24 @@ export default function MemberDashboard() {
         setMemberInvestments(investmentsData);
       }
       
-      // Load member training
-      const trainingResponse = await fetch(`/api/members/training?userId=${userId}`);
+      // Load member training - use educational content instead
+      const trainingResponse = await fetch(`/api/educational-content`);
       if (trainingResponse.ok) {
         const trainingData = await trainingResponse.json();
-        setMemberTraining(trainingData);
+        // Transform educational content to match training format
+        const formattedTraining = trainingData.map((content: any) => ({
+          id: content.id,
+          title: content.title,
+          description: content.description,
+          duration_hours: parseFloat(content.duration?.replace(/[^0-9.]/g, '') || '1'),
+          category: content.category,
+          level: content.difficulty_level,
+          progress_status: 'not_started', // TODO: Add progress tracking
+          progress_percentage: 0,
+          started_at: null,
+          completed_at: null
+        }));
+        setMemberTraining(formattedTraining);
       }
       
       // Load recent activities
@@ -804,14 +817,20 @@ function LearningSection({ memberTraining, user }: { memberTraining: any[]; user
   const handleViewTraining = async (training: any) => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/training/${training.id}?userId=${user?.id}`);
+      // Use educational content lessons API
+      const response = await fetch(`/api/admin/educational-content/${training.id}/lessons`);
       if (response.ok) {
-        const data = await response.json();
+        const lessons = await response.json();
         setSelectedTraining(training);
-        setTrainingDetails(data);
+        setTrainingDetails({
+          module: training,
+          lessons: lessons,
+          totalLessons: lessons.length,
+          completedLessons: 0 // TODO: Add progress tracking
+        });
         // Start with first lesson if available
-        if (data.lessons && data.lessons.length > 0) {
-          setCurrentLesson(data.lessons[0]);
+        if (lessons && lessons.length > 0) {
+          setCurrentLesson(lessons[0]);
         }
       } else {
         alert('Hitilafu imetokea wakati wa kupakia mafunzo');
