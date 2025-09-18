@@ -1773,7 +1773,7 @@ function ContentSection({ educationalContent, user, loadAdminData }: { education
   const handleManageLessons = async (content: any) => {
     setManagingLessons(content);
     try {
-      const response = await fetch(`/api/admin/training-modules/${content.id}/lessons`);
+      const response = await fetch(`/api/admin/educational-content/${content.id}/lessons`);
       if (response.ok) {
         const lessonsData = await response.json();
         setLessons(lessonsData);
@@ -1787,8 +1787,8 @@ function ContentSection({ educationalContent, user, loadAdminData }: { education
     e.preventDefault();
     try {
       const url = editingLesson 
-        ? `/api/admin/training-modules/${managingLessons.id}/lessons/${editingLesson.id}`
-        : `/api/admin/training-modules/${managingLessons.id}/lessons`;
+        ? `/api/admin/educational-content/${managingLessons.id}/lessons/${editingLesson.id}`
+        : `/api/admin/educational-content/${managingLessons.id}/lessons`;
       
       const method = editingLesson ? 'PUT' : 'POST';
       
@@ -1821,7 +1821,7 @@ function ContentSection({ educationalContent, user, loadAdminData }: { education
   const handleDeleteLesson = async (lessonId: number) => {
     if (confirm('Je, una uhakika unataka kufuta somo hili? Hatua hii haiwezi kubadilishwa.')) {
       try {
-        const response = await fetch(`/api/admin/training-modules/${managingLessons.id}/lessons/${lessonId}`, {
+        const response = await fetch(`/api/admin/educational-content/${managingLessons.id}/lessons/${lessonId}`, {
           method: 'DELETE'
         });
         
