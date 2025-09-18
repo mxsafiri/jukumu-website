@@ -39,14 +39,39 @@ export default function MemberDashboard() {
         return;
       }
       
-      // Load member data
-      loadMemberData(parsedUser.id);
+      // First verify user-to-member mapping
+      verifyUserMemberMapping(parsedUser.id);
     } else {
       router.push('/login');
     }
   }, [router]);
 
-  const loadMemberData = async (userId: number) => {
+  const verifyUserMemberMapping = async (userId: number) => {
+    try {
+      const response = await fetch(`/api/user-to-member?userId=${userId}`);
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        console.log('User-Member mapping:', data);
+        
+        if (data.hasMemberProfile) {
+          // Load member data using the correct member ID
+          loadMemberData(userId, data.member.id);
+        } else {
+          console.warn('User has no member profile');
+          setLoading(false);
+        }
+      } else {
+        console.error('Failed to verify user-member mapping:', data.error);
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error verifying user-member mapping:', error);
+      setLoading(false);
+    }
+  };
+
+  const loadMemberData = async (userId: number, memberId?: number) => {
     try {
       setLoading(true);
       

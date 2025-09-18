@@ -760,7 +760,8 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
   const handleViewGroup = async (group: any) => {
     setSelectedGroup(group);
     setGroupMembers([]);
-    setShowGroupDetails(true);
+    setShowGroupDetails(true)
+    console.log('`in here')
     
     // Fetch group members
     try {
