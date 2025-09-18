@@ -761,7 +761,6 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
     setSelectedGroup(group);
     setGroupMembers([]);
     setShowGroupDetails(true)
-    console.log('`in here')
     
     // Fetch group members
     try {
@@ -1649,6 +1648,17 @@ function ContentSection({ educationalContent, user, loadAdminData }: { education
   const [showContentForm, setShowContentForm] = useState(false);
   const [editingContent, setEditingContent] = useState<any>(null);
   const [viewingContent, setViewingContent] = useState<any>(null);
+  const [managingLessons, setManagingLessons] = useState<any>(null);
+  const [lessons, setLessons] = useState<any[]>([]);
+  const [showLessonForm, setShowLessonForm] = useState(false);
+  const [editingLesson, setEditingLesson] = useState<any>(null);
+  const [lessonForm, setLessonForm] = useState({
+    title: '',
+    content: '',
+    duration_minutes: 15,
+    lesson_type: 'text',
+    video_url: ''
+  });
   const [contentForm, setContentForm] = useState({
     title: '',
     description: '',
@@ -1741,14 +1751,13 @@ function ContentSection({ educationalContent, user, loadAdminData }: { education
 
   const handleTogglePublish = async (contentId: number, currentStatus: boolean) => {
     try {
-      const response = await fetch(`/api/educational-content/${contentId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          is_published: !currentStatus
-        }),
+      const response = await fetch('/api/admin/content', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          id: contentId, 
+          is_published: !currentStatus 
+        })
       });
       
       if (response.ok) {
@@ -1758,6 +1767,72 @@ function ContentSection({ educationalContent, user, loadAdminData }: { education
     } catch (error) {
       console.error('Error toggling publish status:', error);
       alert('Hitilafu imetokea.');
+    }
+  };
+
+  const handleManageLessons = async (content: any) => {
+    setManagingLessons(content);
+    try {
+      const response = await fetch(`/api/admin/training-modules/${content.id}/lessons`);
+      if (response.ok) {
+        const lessonsData = await response.json();
+        setLessons(lessonsData);
+      }
+    } catch (error) {
+      console.error('Error loading lessons:', error);
+    }
+  };
+
+  const handleLessonSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const url = editingLesson 
+        ? `/api/admin/training-modules/${managingLessons.id}/lessons/${editingLesson.id}`
+        : `/api/admin/training-modules/${managingLessons.id}/lessons`;
+      
+      const method = editingLesson ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(lessonForm)
+      });
+
+      if (response.ok) {
+        setShowLessonForm(false);
+        setEditingLesson(null);
+        setLessonForm({
+          title: '',
+          content: '',
+          duration_minutes: 15,
+          lesson_type: 'text',
+          video_url: ''
+        });
+        // Reload lessons
+        handleManageLessons(managingLessons);
+        alert(editingLesson ? 'Somo limebadilishwa kwa mafanikio!' : 'Somo limeongezwa kwa mafanikio!');
+      }
+    } catch (error) {
+      console.error('Error saving lesson:', error);
+      alert('Hitilafu imetokea wakati wa kuhifadhi somo.');
+    }
+  };
+
+  const handleDeleteLesson = async (lessonId: number) => {
+    if (confirm('Je, una uhakika unataka kufuta somo hili? Hatua hii haiwezi kubadilishwa.')) {
+      try {
+        const response = await fetch(`/api/admin/training-modules/${managingLessons.id}/lessons/${lessonId}`, {
+          method: 'DELETE'
+        });
+        
+        if (response.ok) {
+          handleManageLessons(managingLessons);
+          alert('Somo limefutwa kwa mafanikio!');
+        }
+      } catch (error) {
+        console.error('Error deleting lesson:', error);
+        alert('Hitilafu imetokea wakati wa kufuta somo.');
+      }
     }
   };
 
@@ -1986,6 +2061,178 @@ function ContentSection({ educationalContent, user, loadAdminData }: { education
         </div>
       )}
 
+      {/* Lesson Management Modal */}
+      {managingLessons && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-semibold text-gray-900">
+                  Dhibiti Masomo - {managingLessons.title}
+                </h3>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => {
+                      setEditingLesson(null);
+                      setLessonForm({
+                        title: '',
+                        content: '',
+                        duration_minutes: 15,
+                        lesson_type: 'text',
+                        video_url: ''
+                      });
+                      setShowLessonForm(true);
+                    }}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                  >
+                    <PlusIcon className="h-4 w-4 inline mr-2" />
+                    Ongeza Somo
+                  </button>
+                  <button
+                    onClick={() => setManagingLessons(null)}
+                    className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400"
+                  >
+                    Funga
+                  </button>
+                </div>
+              </div>
+
+              {/* Lesson Form */}
+              {showLessonForm && (
+                <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                  <h4 className="text-lg font-semibold mb-4">
+                    {editingLesson ? 'Hariri Somo' : 'Somo Jipya'}
+                  </h4>
+                  <form onSubmit={handleLessonSubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Kichwa cha Somo
+                        </label>
+                        <input
+                          type="text"
+                          value={lessonForm.title}
+                          onChange={(e) => setLessonForm({...lessonForm, title: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Muda (Dakika)
+                        </label>
+                        <input
+                          type="number"
+                          value={lessonForm.duration_minutes}
+                          onChange={(e) => setLessonForm({...lessonForm, duration_minutes: parseInt(e.target.value)})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          min="1"
+                          required
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Maudhui ya Somo
+                      </label>
+                      <textarea
+                        value={lessonForm.content}
+                        onChange={(e) => setLessonForm({...lessonForm, content: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        rows={8}
+                        placeholder="Andika maudhui ya somo hapa..."
+                        required
+                      />
+                    </div>
+
+                    <div className="flex space-x-2">
+                      <button
+                        type="submit"
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                      >
+                        {editingLesson ? 'Hifadhi Mabadiliko' : 'Hifadhi Somo'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowLessonForm(false);
+                          setEditingLesson(null);
+                        }}
+                        className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+                      >
+                        Ghairi
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* Lessons List */}
+              <div className="space-y-4">
+                <h4 className="text-lg font-semibold">Masomo ({lessons.length})</h4>
+                {lessons.length > 0 ? (
+                  <div className="space-y-3">
+                    {lessons.map((lesson, index) => (
+                      <div key={lesson.id} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded">
+                                Somo {lesson.lesson_order}
+                              </span>
+                              <span className="text-sm text-gray-500">
+                                {lesson.duration_minutes} dakika
+                              </span>
+                            </div>
+                            <h5 className="font-medium text-gray-900 mb-2">{lesson.title}</h5>
+                            <p className="text-sm text-gray-600 line-clamp-3">
+                              {lesson.content.substring(0, 200)}...
+                            </p>
+                          </div>
+                          <div className="flex space-x-2 ml-4">
+                            <button
+                              onClick={() => {
+                                setEditingLesson(lesson);
+                                setLessonForm({
+                                  title: lesson.title,
+                                  content: lesson.content,
+                                  duration_minutes: lesson.duration_minutes,
+                                  lesson_type: lesson.lesson_type,
+                                  video_url: lesson.video_url || ''
+                                });
+                                setShowLessonForm(true);
+                              }}
+                              className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50"
+                              title="Hariri"
+                            >
+                              <PencilIcon className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteLesson(lesson.id)}
+                              className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
+                              title="Futa"
+                            >
+                              <TrashIcon className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <BookOpenIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <p>Hakuna masomo yaliyoongezwa bado.</p>
+                    <p className="text-sm">Bonyeza "Ongeza Somo" kuanza kuunda maudhui.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -2038,6 +2285,13 @@ function ContentSection({ educationalContent, user, loadAdminData }: { education
                     title="Hariri"
                   >
                     <PencilIcon className="h-4 w-4" />
+                  </button>
+                  <button 
+                    onClick={() => handleManageLessons(content)}
+                    className="text-purple-600 hover:text-purple-900 p-1 rounded hover:bg-purple-50"
+                    title="Dhibiti Masomo"
+                  >
+                    <BookOpenIcon className="h-4 w-4" />
                   </button>
                   <button 
                     onClick={() => handleDeleteContent(content.id)}
