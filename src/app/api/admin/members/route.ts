@@ -125,20 +125,26 @@ export async function PUT(request: NextRequest) {
         const memberDetails = await client.query('SELECT full_name FROM members WHERE id = $1', [id]);
         
         if (groupDetails.rows.length > 0 && memberDetails.rows.length > 0) {
-          // Create notification for the member
-          await client.query(`
-            SELECT create_notification($1, $2, $3, $4, $5, $6, $7, $8, $9)
-          `, [
-            id, // user_id
-            'Umeongezwa kwenye Kundi!', // title
-            `Hongera! Umeongezwa kwenye kundi la "${groupDetails.rows[0].name}". Anza kushiriki na wanachama wengine na uongeze mchango wako.`, // message
-            'success', // type
-            'group', // category
-            '/member-dashboard', // action_url
-            'Angalia Kundi', // action_text
-            JSON.stringify({ group_id: groupId, action: 'view_group' }), // metadata
-            null // expires_at
-          ]);
+          // Try to create notification for the member (optional - don't fail if notifications table doesn't exist)
+          try {
+            await client.query(`
+              SELECT create_notification($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            `, [
+              id, // user_id
+              'Umeongezwa kwenye Kundi!', // title
+              `Hongera! Umeongezwa kwenye kundi la "${groupDetails.rows[0].name}". Anza kushiriki na wanachama wengine na uongeze mchango wako.`, // message
+              'success', // type
+              'group', // category
+              '/member-dashboard', // action_url
+              'Angalia Kundi', // action_text
+              JSON.stringify({ group_id: groupId, action: 'view_group' }), // metadata
+              null // expires_at
+            ]);
+            console.log('Notification created successfully');
+          } catch (notificationError) {
+            console.log('Notification creation failed (optional):', notificationError);
+            // Continue without failing - notifications are optional
+          }
         }
       }
       
@@ -165,29 +171,79 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
+    const body = await request.json();
+    const { id } = body;
     
     if (!id) {
-      return NextResponse.json({ error: 'Member ID is required' }, { status: 400 });
+      return NextResponse.json({ 
+        error: 'ID ya mwanachama ni lazima kwa kufuta mwanachama.' 
+      }, { status: 400 });
     }
     
     const client = await pool.connect();
     
-    // Remove from groups first
-    await client.query('DELETE FROM group_members WHERE member_id = $1', [id]);
-    
-    // Remove training progress
-    await client.query('DELETE FROM member_training WHERE member_id = $1', [id]);
-    
-    // Remove member
-    await client.query('DELETE FROM members WHERE id = $1', [id]);
-    
-    client.release();
-    
-    return NextResponse.json({ success: true });
+    try {
+      // Check if member exists and get details
+      const memberCheck = await client.query(
+        'SELECT full_name, status FROM members WHERE id = $1',
+        [id]
+      );
+      
+      if (memberCheck.rows.length === 0) {
+        client.release();
+        return NextResponse.json({ 
+          error: 'Mwanachama hakupatikana.' 
+        }, { status: 404 });
+      }
+      
+      const member = memberCheck.rows[0];
+      
+      // Only allow deletion of inactive members for safety
+      if (member.status === 'active') {
+        client.release();
+        return NextResponse.json({ 
+          error: `Mwanachama "${member.full_name}" bado ni hai. Badilisha hali kuwa "Haifanyi kazi" kwanza kabla ya kufuta.` 
+        }, { status: 400 });
+      }
+      
+      // Check if member is a group leader
+      const leaderCheck = await client.query(
+        'SELECT g.name FROM groups g WHERE g.leader_id = (SELECT user_id FROM members WHERE id = $1)',
+        [id]
+      );
+      
+      if (leaderCheck.rows.length > 0) {
+        client.release();
+        return NextResponse.json({ 
+          error: `Mwanachama "${member.full_name}" ni kiongozi wa kundi "${leaderCheck.rows[0].name}". Badilisha kiongozi kwanza kabla ya kufuta.` 
+        }, { status: 400 });
+      }
+      
+      // Delete related records first (cascade delete)
+      await client.query('DELETE FROM group_members WHERE member_id = $1', [id]);
+      await client.query('DELETE FROM member_training WHERE member_id = $1', [id]);
+      await client.query('DELETE FROM monthly_contributions WHERE member_id = $1', [id]);
+      await client.query('DELETE FROM business_reports WHERE member_id = $1', [id]);
+      await client.query('DELETE FROM join_requests WHERE member_id = $1', [id]);
+      await client.query('DELETE FROM content_progress WHERE user_id = (SELECT user_id FROM members WHERE id = $1)', [id]);
+      
+      // Delete the member
+      const result = await client.query('DELETE FROM members WHERE id = $1 RETURNING full_name', [id]);
+      
+      client.release();
+      
+      return NextResponse.json({ 
+        success: true,
+        message: `Mwanachama "${result.rows[0].full_name}" amefutwa kwa mafanikio!`
+      });
+    } catch (dbError) {
+      client.release();
+      throw dbError;
+    }
   } catch (error) {
     console.error('Database error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Hitilafu imetokea wakati wa kufuta mwanachama. Jaribu tena.' 
+    }, { status: 500 });
   }
 }

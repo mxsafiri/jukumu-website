@@ -111,6 +111,18 @@ export async function POST(request: NextRequest) {
         $$ LANGUAGE plpgsql;
       `);
 
+      // Update group_members table to support new leadership roles
+      await client.query(`
+        ALTER TABLE group_members 
+        DROP CONSTRAINT IF EXISTS group_members_role_check;
+      `);
+      
+      await client.query(`
+        ALTER TABLE group_members 
+        ADD CONSTRAINT group_members_role_check 
+        CHECK (role IN ('leader', 'member', 'mwenyekiti', 'katibu', 'mwekahazina'));
+      `);
+
       // Verify table creation
       const tableCheck = await client.query(`
         SELECT table_name 
@@ -122,7 +134,7 @@ export async function POST(request: NextRequest) {
       
       return NextResponse.json({ 
         success: true, 
-        message: 'Join requests schema applied successfully!',
+        message: 'Schema updated successfully! Join requests table and group leadership roles are now available.',
         tableExists: tableCheck.rows.length > 0
       });
       

@@ -373,7 +373,7 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
     }
   };
 
-  const handleAddToGroup = async (memberId: number, groupId: number) => {
+  const handleAddToGroup = async (memberId: number, groupId: number, selectElement?: HTMLSelectElement) => {
     try {
       console.log('Adding member to group:', { memberId, groupId });
       
@@ -387,15 +387,30 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
       console.log('API response:', data);
       
       if (response.ok && data.success) {
+        // Reset the dropdown
+        if (selectElement) {
+          selectElement.value = '';
+        }
+        
         loadAdminData();
         alert(data.message || 'Mwanachama ameongezwa kwenye kundi kwa mafanikio!');
       } else {
         console.error('API error:', data);
         alert(data.error || 'Hitilafu imetokea wakati wa kuongeza mwanachama kwenye kundi.');
+        
+        // Reset the dropdown on error too
+        if (selectElement) {
+          selectElement.value = '';
+        }
       }
     } catch (error) {
       console.error('Network error adding member to group:', error);
       alert('Hitilafu ya mtandao. Hakikisha una muunganisho wa mtandao na jaribu tena.');
+      
+      // Reset the dropdown on error
+      if (selectElement) {
+        selectElement.value = '';
+      }
     }
   };
 
@@ -437,6 +452,36 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
     } catch (error) {
       console.error('Error adding member:', error);
       alert('Hitilafu imetokea. Jaribu tena.');
+    }
+  };
+
+  const handleDeleteMember = async (member: any) => {
+    const confirmDelete = window.confirm(
+      `Je, una uhakika unataka kufuta mwanachama "${member.full_name}"?\n\nHii itafuta:\n- Taarifa zote za mwanachama\n- Historia ya michango\n- Maendeleo ya mafunzo\n- Ripoti za biashara\n\nHatua hii haiwezi kurudishwa!`
+    );
+    
+    if (!confirmDelete) return;
+    
+    try {
+      const response = await fetch('/api/admin/members', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: member.id }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        loadAdminData();
+        alert(data.message || 'Mwanachama amefutwa kwa mafanikio!');
+      } else {
+        alert(data.error || 'Hitilafu imetokea wakati wa kufuta mwanachama.');
+      }
+    } catch (error) {
+      console.error('Error deleting member:', error);
+      alert('Hitilafu imetokea. Hakikisha una muunganisho wa mtandao na jaribu tena.');
     }
   };
 
@@ -522,7 +567,11 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
                       <select
-                        onChange={(e) => e.target.value && handleAddToGroup(member.id, parseInt(e.target.value))}
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            handleAddToGroup(member.id, parseInt(e.target.value), e.target as HTMLSelectElement);
+                          }
+                        }}
                         className="text-xs border border-gray-300 rounded px-2 py-1"
                         defaultValue=""
                       >
@@ -531,6 +580,15 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
                           <option key={group.id} value={group.id}>{group.name}</option>
                         ))}
                       </select>
+                      {member.status === 'inactive' && (
+                        <button
+                          onClick={() => handleDeleteMember(member)}
+                          className="bg-red-600 text-white px-2 py-1 rounded text-xs hover:bg-red-700 transition-colors duration-200"
+                          title="Futa Mwanachama"
+                        >
+                          <TrashIcon className="h-3 w-3" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -721,6 +779,74 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
     setShowEditGroup(true);
   };
 
+  const handleRoleChange = async (memberId: number, newRole: string) => {
+    if (!selectedGroup) return;
+    
+    try {
+      const response = await fetch(`/api/admin/groups/${selectedGroup.id}/leadership`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          memberId: memberId,
+          role: newRole
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Refresh group members data
+        const membersResponse = await fetch(`/api/admin/groups/${selectedGroup.id}/members`);
+        if (membersResponse.ok) {
+          const membersData = await membersResponse.json();
+          setGroupMembers(membersData);
+        }
+        
+        // Refresh main admin data
+        loadAdminData();
+        
+        alert(data.message || 'Nafasi ya uongozi imebadilishwa kwa mafanikio!');
+      } else {
+        alert(data.error || 'Hitilafu imetokea wakati wa kubadilisha nafasi ya uongozi.');
+      }
+    } catch (error) {
+      console.error('Error updating member role:', error);
+      alert('Hitilafu imetokea. Hakikisha una muunganisho wa mtandao na jaribu tena.');
+    }
+  };
+
+  const handleDeleteGroup = async (group: any) => {
+    const confirmDelete = window.confirm(
+      `Je, una uhakika unataka kufuta kundi "${group.name}"?\n\nHii itafuta:\n- Kundi lote\n- Historia ya michango\n- Rekodi za uwekezaji\n- Maombi ya kujiunga\n\nHatua hii haiwezi kurudishwa!`
+    );
+    
+    if (!confirmDelete) return;
+    
+    try {
+      const response = await fetch('/api/admin/groups', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: group.id }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        loadAdminData();
+        alert(data.message || 'Kundi limefutwa kwa mafanikio!');
+      } else {
+        alert(data.error || 'Hitilafu imetokea wakati wa kufuta kundi.');
+      }
+    } catch (error) {
+      console.error('Error deleting group:', error);
+      alert('Hitilafu imetokea. Hakikisha una muunganisho wa mtandao na jaribu tena.');
+    }
+  };
+
   const handleUpdateGroup = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -901,8 +1027,18 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
                 >
                   Angalia
                 </button>
-                <button className="flex-1 bg-gray-600 text-white px-3 py-2 rounded text-sm hover:bg-gray-700 transition-colors duration-200">
+                <button 
+                  onClick={() => handleEditGroup(group)}
+                  className="flex-1 bg-gray-600 text-white px-3 py-2 rounded text-sm hover:bg-gray-700 transition-colors duration-200"
+                >
                   Hariri
+                </button>
+                <button 
+                  onClick={() => handleDeleteGroup(group)}
+                  className="bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700 transition-colors duration-200"
+                  title="Futa Kundi"
+                >
+                  <TrashIcon className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -996,6 +1132,7 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nafasi</th>
                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tarehe ya Kujiunge</th>
                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hali</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vitendo</th>
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -1009,9 +1146,17 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
                               </td>
                               <td className="px-4 py-2 whitespace-nowrap">
                                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                  member.role === 'leader' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
+                                  member.role === 'leader' ? 'bg-blue-100 text-blue-800' : 
+                                  member.role === 'mwenyekiti' ? 'bg-purple-100 text-purple-800' :
+                                  member.role === 'katibu' ? 'bg-green-100 text-green-800' :
+                                  member.role === 'mwekahazina' ? 'bg-yellow-100 text-yellow-800' :
+                                  'bg-gray-100 text-gray-800'
                                 }`}>
-                                  {member.role === 'leader' ? 'Kiongozi' : 'Mwanachama'}
+                                  {member.role === 'leader' ? 'Kiongozi' : 
+                                   member.role === 'mwenyekiti' ? 'Mwenyekiti' :
+                                   member.role === 'katibu' ? 'Katibu' :
+                                   member.role === 'mwekahazina' ? 'MwekaHazina' :
+                                   'Mwanachama'}
                                 </span>
                               </td>
                               <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
@@ -1023,6 +1168,19 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
                                 }`}>
                                   {member.status === 'active' ? 'Hai' : 'Haifanyi kazi'}
                                 </span>
+                              </td>
+                              <td className="px-4 py-2 whitespace-nowrap">
+                                <select
+                                  value={member.role}
+                                  onChange={(e) => handleRoleChange(member.id, e.target.value)}
+                                  className="text-xs border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                >
+                                  <option value="member">Mwanachama</option>
+                                  <option value="leader">Kiongozi</option>
+                                  <option value="mwenyekiti">Mwenyekiti</option>
+                                  <option value="katibu">Katibu</option>
+                                  <option value="mwekahazina">MwekaHazina</option>
+                                </select>
                               </td>
                             </tr>
                           ))}

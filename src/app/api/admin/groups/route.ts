@@ -116,3 +116,67 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { id } = body;
+    
+    if (!id) {
+      return NextResponse.json({ 
+        error: 'ID ya kundi ni lazima kwa kufuta kundi.' 
+      }, { status: 400 });
+    }
+    
+    const client = await pool.connect();
+    
+    try {
+      // Check if group exists and get member count
+      const groupCheck = await client.query(
+        'SELECT name, (SELECT COUNT(*) FROM group_members WHERE group_id = $1 AND status = \'active\') as member_count FROM groups WHERE id = $1',
+        [id]
+      );
+      
+      if (groupCheck.rows.length === 0) {
+        client.release();
+        return NextResponse.json({ 
+          error: 'Kundi halikupatikana.' 
+        }, { status: 404 });
+      }
+      
+      const group = groupCheck.rows[0];
+      
+      // Prevent deletion if group has active members
+      if (group.member_count > 0) {
+        client.release();
+        return NextResponse.json({ 
+          error: `Kundi "${group.name}" bado lina wanachama ${group.member_count}. Ondoa wanachama wote kwanza kabla ya kufuta kundi.` 
+        }, { status: 400 });
+      }
+      
+      // Delete related records first (cascade delete)
+      await client.query('DELETE FROM group_members WHERE group_id = $1', [id]);
+      await client.query('DELETE FROM investments WHERE group_id = $1', [id]);
+      await client.query('DELETE FROM monthly_contributions WHERE group_id = $1', [id]);
+      await client.query('DELETE FROM join_requests WHERE group_id = $1', [id]);
+      
+      // Delete the group
+      const result = await client.query('DELETE FROM groups WHERE id = $1 RETURNING name', [id]);
+      
+      client.release();
+      
+      return NextResponse.json({ 
+        success: true,
+        message: `Kundi "${result.rows[0].name}" limefutwa kwa mafanikio!`
+      });
+    } catch (dbError) {
+      client.release();
+      throw dbError;
+    }
+  } catch (error) {
+    console.error('Database error:', error);
+    return NextResponse.json({ 
+      error: 'Hitilafu imetokea wakati wa kufuta kundi. Jaribu tena.' 
+    }, { status: 500 });
+  }
+}
