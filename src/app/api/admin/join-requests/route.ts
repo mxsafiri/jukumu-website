@@ -4,9 +4,78 @@ import pool from '@/lib/db';
 // Get all pending join requests for admin review
 export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const debug = searchParams.get('debug') === 'true';
+    
     const client = await pool.connect();
     
     try {
+      if (debug) {
+        // Debug mode - get detailed information
+        const result = await client.query(`
+          SELECT 
+            jr.id as request_id,
+            jr.member_id,
+            jr.group_id,
+            jr.message,
+            jr.status,
+            jr.created_at,
+            
+            -- Member information from join request
+            m.id as actual_member_id,
+            m.full_name as actual_member_name,
+            m.email as actual_member_email,
+            m.phone as actual_member_phone,
+            
+            -- Group information
+            g.name as group_name,
+            g.monthly_contribution,
+            g.leader_id,
+            
+            -- Leader information
+            leader.full_name as leader_name,
+            leader.email as leader_email
+            
+          FROM join_requests jr
+          JOIN members m ON jr.member_id = m.id
+          JOIN groups g ON jr.group_id = g.id
+          LEFT JOIN members leader ON g.leader_id = leader.id
+          WHERE jr.status = 'pending'
+          ORDER BY jr.created_at DESC
+          LIMIT 10
+        `);
+
+        // Also get members with similar names to check for duplicates
+        const membersCheck = await client.query(`
+          SELECT id, full_name, email, phone, created_at
+          FROM members 
+          WHERE full_name ILIKE '%donosia%' OR email ILIKE '%donoyela%'
+          ORDER BY created_at DESC
+        `);
+
+        // Check for potential duplicate members
+        const duplicateCheck = await client.query(`
+          SELECT 
+            full_name, 
+            email, 
+            COUNT(*) as count,
+            STRING_AGG(id::text, ', ') as member_ids
+          FROM members 
+          GROUP BY full_name, email
+          HAVING COUNT(*) > 1
+        `);
+
+        client.release();
+        
+        return NextResponse.json({
+          success: true,
+          debug: true,
+          joinRequests: result.rows,
+          membersWithSimilarNames: membersCheck.rows,
+          duplicateMembers: duplicateCheck.rows,
+          message: 'Debug data retrieved successfully'
+        });
+      }
       const result = await client.query(`
         SELECT 
           jr.id,
