@@ -118,12 +118,23 @@ export async function PUT(
       });
     } catch (dbError) {
       client.release();
+      console.error('Database error in leadership update:', dbError);
+      
+      // Check if it's a constraint violation (likely the role constraint)
+      if (dbError instanceof Error && dbError.message.includes('check constraint')) {
+        return NextResponse.json({ 
+          error: 'Nafasi hii haijaidhinishwa bado. Tumia "/api/admin/update-schema" kwanza kubadilisha mfumo wa data.',
+          details: 'Database schema needs to be updated to support new leadership roles'
+        }, { status: 400 });
+      }
+      
       throw dbError;
     }
   } catch (error) {
     console.error('Database error:', error);
     return NextResponse.json({ 
-      error: 'Hitilafu imetokea wakati wa kubadilisha nafasi ya uongozi' 
+      error: 'Hitilafu imetokea wakati wa kubadilisha nafasi ya uongozi',
+      details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   }
 }
