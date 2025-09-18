@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
     const client = await pool.connect();
     
-    // Get member's training progress
+    // Get member's training progress - show all active training modules
     const result = await client.query(`
       SELECT 
         tm.id,
@@ -21,14 +21,21 @@ export async function GET(request: NextRequest) {
         tm.duration_hours,
         tm.category,
         tm.level,
-        mt.status as progress_status,
-        mt.progress_percentage,
+        tm.status,
+        COALESCE(mt.status, 'not_started') as progress_status,
+        COALESCE(mt.progress_percentage, 0) as progress_percentage,
         mt.started_at,
-        mt.completed_at
+        mt.completed_at,
+        COUNT(tl.id) as total_lessons,
+        COUNT(CASE WHEN lp.completed = true THEN 1 END) as completed_lessons
       FROM training_modules tm
       LEFT JOIN member_training mt ON tm.id = mt.training_id 
         AND mt.member_id = (SELECT id FROM members WHERE user_id = $1)
+      LEFT JOIN training_lessons tl ON tm.id = tl.training_module_id
+      LEFT JOIN lesson_progress lp ON tl.id = lp.lesson_id 
+        AND lp.member_id = (SELECT id FROM members WHERE user_id = $1)
       WHERE tm.status = 'active'
+      GROUP BY tm.id, tm.title, tm.description, tm.duration_hours, tm.category, tm.level, tm.status, mt.status, mt.progress_percentage, mt.started_at, mt.completed_at
       ORDER BY tm.created_at DESC
     `, [userId]);
     

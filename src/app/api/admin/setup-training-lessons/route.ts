@@ -50,7 +50,7 @@ export async function GET() {
         )
       `);
       
-      // Check if lessons already exist
+      // Just check if tables exist - don't create any mock content
       let lessonCount = 0;
       try {
         const existingLessons = await client.query('SELECT COUNT(*) FROM training_lessons');
@@ -58,72 +58,6 @@ export async function GET() {
       } catch (e) {
         // Table might not exist yet, that's ok
         lessonCount = 0;
-      }
-      
-      if (lessonCount === 0) {
-        // Get actual training modules from database
-        const modulesResult = await client.query('SELECT id FROM training_modules ORDER BY id LIMIT 3');
-        const moduleIds = modulesResult.rows.map(row => row.id);
-        
-        if (moduleIds.length === 0) {
-          client.release();
-          return NextResponse.json({
-            success: false,
-            error: 'No training modules found. Please create training modules first.'
-          });
-        }
-        
-        // Insert sample lessons using actual module IDs
-        const lessons = [
-          // Use first available module ID
-          [moduleIds[0], 'Utangulizi wa Uongozi', `Katika somo hili, tutajifunza misingi ya uongozi wa biashara. Uongozi ni uwezo wa kuongoza na kuhamasisha watu ili kufikia malengo ya pamoja.
-
-**Mambo Muhimu ya Uongozi:**
-1. **Maono (Vision)** - Kuwa na maono wazi ya mahali unapotaka kufikia
-2. **Uongozaji (Leadership)** - Kuwa mfano mzuri kwa wengine
-3. **Mawasiliano** - Kujua jinsi ya kuwasiliana vizuri na timu yako
-4. **Uamuzi** - Kuweza kufanya maamuzi magumu wakati wa shida
-
-**Zoezi:**
-Fikiria biashara yako. Ni maono gani unayo? Andika malengo matatu makuu unayotaka kufikia katika miezi sita ijayo.`, 1, 20, 'text'],
-          
-          [moduleIds[0], 'Jinsi ya Kuunda Timu Imara', `Timu imara ni msingi wa biashara yoyote ya mafanikio. Katika somo hili, tutajifunza jinsi ya kuunda na kudumisha timu inayofanya kazi vizuri.
-
-**Hatua za Kuunda Timu Imara:**
-
-1. **Chagua Watu Wazuri**
-   - Tafuta watu wenye ujuzi unaohitajika
-   - Hakikisha wana maadili mazuri
-
-2. **Wape Mafunzo**
-   - Waeleze vizuri kazi zao
-   - Wape mafunzo ya kutosha
-
-**Zoezi Vitendo:**
-Orodhesha majukumu matano muhimu katika biashara yako.`, 2, 25, 'text'],
-          
-          [moduleIds[0], 'Udhibiti wa Gharama na Mapato', `Biashara yoyote ya mafanikio lazima ijue jinsi ya kudhibiti gharama na kuongeza mapato.
-
-**Udhibiti wa Gharama:**
-
-1. **Orodhesha Gharama Zote**
-   - Kodi za nyumba/duka
-   - Mishahara ya wafanyakazi
-
-2. **Punguza Gharama Zisizohitajika**
-   - Kagua gharama kila mwezi
-   - Linganisha bei za wauzaji mbalimbali
-
-**Zoezi:**
-Tengeneza bajeti rahisi ya biashara yako kwa mwezi mmoja.`, 3, 30, 'text']
-        ];
-        
-        for (const lesson of lessons) {
-          await client.query(`
-            INSERT INTO training_lessons (training_module_id, title, content, lesson_order, duration_minutes, lesson_type)
-            VALUES ($1, $2, $3, $4, $5, $6)
-          `, lesson);
-        }
       }
       
       // Create indexes
@@ -135,10 +69,11 @@ Tengeneza bajeti rahisi ya biashara yako kwa mwezi mmoja.`, 3, 30, 'text']
       
       return NextResponse.json({
         success: true,
-        message: 'Training lessons setup completed successfully',
-        lessonsCreated: lessonCount === 0 ? 8 : 0,
+        message: 'Training lesson tables created successfully. Admins can now add lessons to their training modules.',
+        existingLessons: lessonCount,
         tablesCreated: ['training_lessons', 'lesson_progress'],
-        indexesCreated: 3
+        indexesCreated: 3,
+        nextStep: 'Use /api/admin/training-modules/[id]/lessons to add lessons to training modules'
       });
       
     } catch (dbError) {
