@@ -534,8 +534,9 @@ function MyGroupSection({ memberProfile }: { memberProfile: any }) {
         alert(data.message);
         setSelectedGroup(null);
         setJoinMessage('');
-        if (memberInfo?.id) {
-          loadJoinRequests(memberInfo.id);
+        // Use the member ID from the API response
+        if (data.memberInfo?.memberId) {
+          loadJoinRequests(data.memberInfo.memberId);
         }
       } else {
         alert(data.error || 'Hitilafu imetokea');
