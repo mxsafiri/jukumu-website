@@ -66,8 +66,8 @@ export async function GET(
         AND lesson_id IN (SELECT id FROM training_lessons WHERE training_module_id = $2)
       `, [userId, id]);
       
-      const progressMap = {};
-      progressResult.rows.forEach(p => {
+      const progressMap: { [key: number]: any } = {};
+      progressResult.rows.forEach((p: any) => {
         progressMap[p.lesson_id] = p;
       });
       
