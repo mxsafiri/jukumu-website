@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
   UserGroupIcon, PlusIcon, UsersIcon, CurrencyDollarIcon, ChartBarIcon, BookOpenIcon,
-  DocumentTextIcon, CogIcon, ArrowRightOnRectangleIcon, EyeIcon, PencilIcon, TrashIcon
+  DocumentTextIcon, CogIcon, ArrowRightOnRectangleIcon, EyeIcon, PencilIcon, TrashIcon, UserMinusIcon
 } from '@heroicons/react/24/outline';
 import NotificationCenter from '@/components/NotificationCenter';
 import GrowthChart from '@/components/GrowthChart';
@@ -817,6 +817,47 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
     }
   };
 
+  const handleRemoveFromGroup = async (memberId: number, memberName: string) => {
+    if (!selectedGroup) return;
+    
+    const confirmRemove = window.confirm(
+      `Je, una uhakika unataka kuondoa "${memberName}" kwenye kundi "${selectedGroup.name}"?\n\nMwanachama ataendelea kuwa kwenye mfumo lakini hataonekana kwenye kundi hili tena.`
+    );
+    
+    if (!confirmRemove) return;
+    
+    try {
+      const response = await fetch(`/api/admin/groups/${selectedGroup.id}/remove-member`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ memberId }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Refresh group members data
+        const membersResponse = await fetch(`/api/admin/groups/${selectedGroup.id}/members`);
+        if (membersResponse.ok) {
+          const membersData = await membersResponse.json();
+          setGroupMembers(membersData);
+        }
+        
+        // Refresh main admin data
+        loadAdminData();
+        
+        alert(data.message || 'Mwanachama ameondolewa kwenye kundi kwa mafanikio!');
+      } else {
+        alert(data.error || 'Hitilafu imetokea wakati wa kuondoa mwanachama kwenye kundi.');
+      }
+    } catch (error) {
+      console.error('Error removing member from group:', error);
+      alert('Hitilafu imetokea. Hakikisha una muunganisho wa mtandao na jaribu tena.');
+    }
+  };
+
   const handleDeleteGroup = async (group: any) => {
     const confirmDelete = window.confirm(
       `Je, una uhakika unataka kufuta kundi "${group.name}"?\n\nHii itafuta:\n- Kundi lote\n- Historia ya michango\n- Rekodi za uwekezaji\n- Maombi ya kujiunga\n\nHatua hii haiwezi kurudishwa!`
@@ -1132,7 +1173,8 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nafasi</th>
                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tarehe ya Kujiunge</th>
                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hali</th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vitendo</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Badilisha Nafasi</th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ondoa</th>
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -1181,6 +1223,15 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
                                   <option value="katibu">Katibu</option>
                                   <option value="mwekahazina">MwekaHazina</option>
                                 </select>
+                              </td>
+                              <td className="px-4 py-2 whitespace-nowrap">
+                                <button
+                                  onClick={() => handleRemoveFromGroup(member.id, member.full_name)}
+                                  className="bg-red-600 text-white px-2 py-1 rounded text-xs hover:bg-red-700 transition-colors duration-200"
+                                  title="Ondoa kwenye Kundi"
+                                >
+                                  <UserMinusIcon className="h-3 w-3" />
+                                </button>
                               </td>
                             </tr>
                           ))}
