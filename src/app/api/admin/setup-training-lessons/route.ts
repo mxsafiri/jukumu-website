@@ -51,14 +51,32 @@ export async function GET() {
       `);
       
       // Check if lessons already exist
-      const existingLessons = await client.query('SELECT COUNT(*) FROM training_lessons');
-      const lessonCount = parseInt(existingLessons.rows[0].count);
+      let lessonCount = 0;
+      try {
+        const existingLessons = await client.query('SELECT COUNT(*) FROM training_lessons');
+        lessonCount = parseInt(existingLessons.rows[0].count);
+      } catch (e) {
+        // Table might not exist yet, that's ok
+        lessonCount = 0;
+      }
       
       if (lessonCount === 0) {
-        // Insert sample lessons
+        // Get actual training modules from database
+        const modulesResult = await client.query('SELECT id FROM training_modules ORDER BY id LIMIT 3');
+        const moduleIds = modulesResult.rows.map(row => row.id);
+        
+        if (moduleIds.length === 0) {
+          client.release();
+          return NextResponse.json({
+            success: false,
+            error: 'No training modules found. Please create training modules first.'
+          });
+        }
+        
+        // Insert sample lessons using actual module IDs
         const lessons = [
-          // Uongozi wa Biashara lessons (module 1)
-          [1, 'Utangulizi wa Uongozi', `Katika somo hili, tutajifunza misingi ya uongozi wa biashara. Uongozi ni uwezo wa kuongoza na kuhamasisha watu ili kufikia malengo ya pamoja.
+          // Use first available module ID
+          [moduleIds[0], 'Utangulizi wa Uongozi', `Katika somo hili, tutajifunza misingi ya uongozi wa biashara. Uongozi ni uwezo wa kuongoza na kuhamasisha watu ili kufikia malengo ya pamoja.
 
 **Mambo Muhimu ya Uongozi:**
 1. **Maono (Vision)** - Kuwa na maono wazi ya mahali unapotaka kufikia
@@ -69,114 +87,35 @@ export async function GET() {
 **Zoezi:**
 Fikiria biashara yako. Ni maono gani unayo? Andika malengo matatu makuu unayotaka kufikia katika miezi sita ijayo.`, 1, 20, 'text'],
           
-          [1, 'Jinsi ya Kuunda Timu Imara', `Timu imara ni msingi wa biashara yoyote ya mafanikio. Katika somo hili, tutajifunza jinsi ya kuunda na kudumisha timu inayofanya kazi vizuri.
+          [moduleIds[0], 'Jinsi ya Kuunda Timu Imara', `Timu imara ni msingi wa biashara yoyote ya mafanikio. Katika somo hili, tutajifunza jinsi ya kuunda na kudumisha timu inayofanya kazi vizuri.
 
 **Hatua za Kuunda Timu Imara:**
 
 1. **Chagua Watu Wazuri**
    - Tafuta watu wenye ujuzi unaohitajika
    - Hakikisha wana maadili mazuri
-   - Wachague wale wanaoweza kufanya kazi na wengine
 
 2. **Wape Mafunzo**
    - Waeleze vizuri kazi zao
    - Wape mafunzo ya kutosha
-   - Waongeze ujuzi wao mara kwa mara
-
-3. **Wahamasie**
-   - Wape malengo wazi
-   - Washukuru kwa kazi nzuri
-   - Waongeze mishahara na zawadi
 
 **Zoezi Vitendo:**
-Orodhesha majukumu matano muhimu katika biashara yako na fikiri ni aina gani ya mtu unahitaji kwa kila jukumu.`, 2, 25, 'text'],
+Orodhesha majukumu matano muhimu katika biashara yako.`, 2, 25, 'text'],
           
-          [1, 'Udhibiti wa Gharama na Mapato', `Biashara yoyote ya mafanikio lazima ijue jinsi ya kudhibiti gharama na kuongeza mapato. Hii ni mojawapo ya kazi muhimu za kiongozi.
+          [moduleIds[0], 'Udhibiti wa Gharama na Mapato', `Biashara yoyote ya mafanikio lazima ijue jinsi ya kudhibiti gharama na kuongeza mapato.
 
 **Udhibiti wa Gharama:**
 
 1. **Orodhesha Gharama Zote**
    - Kodi za nyumba/duka
    - Mishahara ya wafanyakazi
-   - Malighafi za umeme, maji, simu
-   - Gharama za malighafi
 
 2. **Punguza Gharama Zisizohitajika**
    - Kagua gharama kila mwezi
    - Linganisha bei za wauzaji mbalimbali
-   - Tumia teknolojia kupunguza gharama
 
 **Zoezi:**
-Tengeneza bajeti rahisi ya biashara yako kwa mwezi mmoja. Orodhesha gharama zote na mapato unayotarajia.`, 3, 30, 'text'],
-          
-          // Utunzaji wa Fedha lessons (module 2)
-          [2, 'Misingi ya Utunzaji wa Fedha', `Utunzaji wa fedha ni mojawapo ya ujuzi muhimu zaidi katika biashara. Bila utunzaji mzuri wa fedha, hata biashara kubwa inaweza kuanguka.
-
-**Kanuni za Msingi za Utunzaji wa Fedha:**
-
-1. **Tenganisha Fedha za Biashara na za Binafsi**
-   - Fungua akaunti ya benki ya biashara
-   - Usitumie fedha za biashara kwa mahitaji ya nyumbani
-   - Weka rekodi za kila malipo
-
-2. **Weka Akiba**
-   - Weka angalau 10% ya mapato kwa akiba
-   - Weka fedha za dharura (angalau mshahara wa miezi 3)
-   - Weka fedha za kuongeza biashara
-
-**Zoezi:**
-Hesabu mapato yako ya wiki iliyopita na ugawanye kwa makundi: akiba, gharama, na faida.`, 1, 25, 'text'],
-          
-          [2, 'Jinsi ya Kuweka Rekodi za Fedha', `Kuweka rekodi sahihi za fedha ni muhimu sana kwa mafanikio ya biashara. Rekodi hizi zinakusaidia kujua hali ya biashara yako na kufanya maamuzi sahihi.
-
-**Aina za Rekodi Muhimu:**
-
-1. **Daftari la Mapato (Sales Book)**
-   - Tarehe ya muuzaji
-   - Jina la mteja (ikiwa inajulikana)
-   - Bidhaa au huduma iliyouzwa
-   - Kiasi cha fedha
-
-**Zoezi:**
-Weka rekodi za biashara yako kwa siku tatu za hivi karibuni.`, 2, 20, 'text'],
-          
-          // Masoko na Uuzaji lessons (module 3)
-          [3, 'Kuelewa Wateja Wako', `Ili kufanikiwa katika biashara, lazima ujue vizuri wateja wako. Kila bidhaa au huduma ina wateja maalum ambao wanahitaji kitu fulani.
-
-**Jinsi ya Kuelewa Wateja:**
-
-1. **Chunguza Mahitaji Yao**
-   - Ni nini wanahitaji?
-   - Ni wakati gani wanahitaji?
-   - Ni kiasi gani wanaweza kulipa?
-   - Ni wapi wanaishi au wanafanya kazi?
-
-**Zoezi:**
-Eleza wateja wako wakuu. Ni nani? Wanahitaji nini? Wanapatikana wapi?`, 1, 30, 'text'],
-          
-          [3, 'Mbinu za Kuuza Kwa Ufanisi', `Kuuza si tu kuweka bidhaa na kusubiri wateja. Kuna mbinu maalum za kuhamasisha wateja kununua na kurudi tena.
-
-**Mbinu za Kuuza:**
-
-1. **Onyesha Faida za Bidhaa**
-   - Eleza jinsi bidhaa itakavyomsaidia mteja
-   - Tumia mifano ya maisha ya kila siku
-   - Onyesha tofauti na bidhaa zingine
-
-**Zoezi:**
-Fikiria bidhaa moja unayouza. Andika mazungumzo ya kuuza yakionyesha faida za bidhaa.`, 2, 25, 'text'],
-          
-          [3, 'Kutumia Mitandao ya Kijamii Kwa Biashara', `Mitandao ya kijamii ni njia bora na ya bei nafuu ya kutangaza biashara yako na kupata wateja wapya.
-
-**Mitandao Muhimu:**
-
-1. **WhatsApp Business**
-   - Tengeneza akaunti ya biashara
-   - Weka picha za bidhaa zako
-   - Tumia "Status" kutangaza
-
-**Zoezi:**
-Tengeneza chapisho la kutangaza bidhaa yako katika mitandao ya kijamii.`, 3, 35, 'text']
+Tengeneza bajeti rahisi ya biashara yako kwa mwezi mmoja.`, 3, 30, 'text']
         ];
         
         for (const lesson of lessons) {
