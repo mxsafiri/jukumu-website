@@ -146,21 +146,21 @@ export default function AdminDashboard() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Inapakia dashibodi...</p>
+          <p className="mt-4 text-gray-600">Loading dashboard...</p>
         </div>
       </div>
     );
   }
 
   const menuItems = [
-    { id: 'overview', name: 'Muhtasari', icon: ChartBarIcon },
-    { id: 'members', name: 'Wanachama', icon: UsersIcon },
-    { name: 'Vikundi', id: 'groups', icon: UserGroupIcon },
-    { name: 'Maombi ya Kujiunga', id: 'join-requests', icon: UserGroupIcon },
-    { name: 'Uwekezaji', id: 'investments', icon: CurrencyDollarIcon },
-    { name: 'Mafunzo', id: 'content', icon: BookOpenIcon },
-    { name: 'Ripoti', id: 'reports', icon: DocumentTextIcon },
-    { name: 'Mipangilio', id: 'settings', icon: CogIcon },
+    { id: 'overview', name: 'Overview', icon: ChartBarIcon },
+    { id: 'members', name: 'Members', icon: UsersIcon },
+    { name: 'Groups', id: 'groups', icon: UserGroupIcon },
+    { name: 'Join Requests', id: 'join-requests', icon: UserGroupIcon },
+    { name: 'Investments', id: 'investments', icon: CurrencyDollarIcon },
+    { name: 'Training', id: 'content', icon: BookOpenIcon },
+    { name: 'Reports', id: 'reports', icon: DocumentTextIcon },
+    { name: 'Settings', id: 'settings', icon: CogIcon },
   ];
 
   const renderContent = () => {
@@ -197,7 +197,7 @@ export default function AdminDashboard() {
             </div>
             <div className="flex items-center space-x-4">
               <NotificationCenter userId={1} className="" />
-              <span className="text-sm text-gray-500">Karibu, Msimamizi</span>
+              <span className="text-sm text-gray-500">Welcome, Msimamizi</span>
             </div>
           </div>
         </div>
@@ -247,13 +247,13 @@ export default function AdminDashboard() {
 function OverviewSection({ adminStats, recentActivities }: { adminStats: any; recentActivities: any[] }) {
   const stats = [
     { 
-      name: 'Jumla ya Wanachama', 
+      name: 'Jumla ya Members', 
       value: adminStats?.totalMembers?.toLocaleString() || '0', 
       change: adminStats?.newMembersThisMonth ? `+${adminStats.newMembersThisMonth} mwezi huu` : '+0%', 
       color: 'bg-blue-500' 
     },
     { 
-      name: 'Vikundi Vya Kazi', 
+      name: 'Groups Vya Kazi', 
       value: adminStats?.totalGroups?.toLocaleString() || '0', 
       change: adminStats?.newGroupsThisMonth ? `+${adminStats.newGroupsThisMonth} mwezi huu` : '+0%', 
       color: 'bg-green-500' 
@@ -302,7 +302,7 @@ function OverviewSection({ adminStats, recentActivities }: { adminStats: any; re
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Growth Chart */}
         <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Ukuaji wa Wanachama</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Ukuaji wa Members</h3>
           <GrowthChart 
             memberCount={adminStats?.totalMembers || 0}
             groupCount={adminStats?.totalGroups || 0}
@@ -311,7 +311,7 @@ function OverviewSection({ adminStats, recentActivities }: { adminStats: any; re
 
         {/* Recent Activities */}
         <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Shughuli za Hivi Karibuni</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Shughuli za Hivi Welcomeni</h3>
           <div className="space-y-4">
             {displayActivities.length > 0 ? (
               displayActivities.map((activity, index) => (
@@ -325,7 +325,7 @@ function OverviewSection({ adminStats, recentActivities }: { adminStats: any; re
               ))
             ) : (
               <div className="text-center py-8">
-                <p className="text-gray-500 text-sm">Hakuna shughuli za hivi karibuni</p>
+                <p className="text-gray-500 text-sm">No shughuli za hivi karibuni</p>
                 <p className="text-gray-400 text-xs mt-1">Shughuli zitaonekana hapa baada ya kuanza kutumia mfumo</p>
               </div>
             )}
@@ -393,10 +393,10 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
         }
         
         loadAdminData();
-        alert(data.message || 'Mwanachama ameongezwa kwenye kundi kwa mafanikio!');
+        alert(data.message || 'Mmembers ameongezwa kwenye kundi kwa mafanikio!');
       } else {
         console.error('API error:', data);
-        alert(data.error || 'Hitilafu imetokea wakati wa kuongeza mwanachama kwenye kundi.');
+        alert(data.error || 'Hitilafu imetokea wakati wa kuongeza mmembers kwenye kundi.');
         
         // Reset the dropdown on error too
         if (selectElement) {
@@ -447,7 +447,7 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
           age: ''
         });
         loadAdminData();
-        alert('Mwanachama ameongezwa kwa mafanikio!');
+        alert('Mmembers ameongezwa kwa mafanikio!');
       }
     } catch (error) {
       console.error('Error adding member:', error);
@@ -457,7 +457,7 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
 
   const handleDeleteMember = async (member: any) => {
     const confirmDelete = window.confirm(
-      `Je, una uhakika unataka kufuta mwanachama "${member.full_name}"?\n\nHii itafuta:\n- Taarifa zote za mwanachama\n- Historia ya michango\n- Maendeleo ya mafunzo\n- Ripoti za biashara\n\nHatua hii haiwezi kurudishwa!`
+      `Je, una uhakika unataka kufuta mmembers "${member.full_name}"?\n\nHii itafuta:\n- Taarifa zote za mmembers\n- Historia ya michango\n- Maendeleo ya mafunzo\n- Ripoti za biashara\n\nHatua hii haiwezi kurudishwa!`
     );
     
     if (!confirmDelete) return;
@@ -475,9 +475,9 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
 
       if (response.ok && data.success) {
         loadAdminData();
-        alert(data.message || 'Mwanachama amefutwa kwa mafanikio!');
+        alert(data.message || 'Mmembers amefutwa kwa mafanikio!');
       } else {
-        alert(data.error || 'Hitilafu imetokea wakati wa kufuta mwanachama.');
+        alert(data.error || 'Hitilafu imetokea wakati wa kufuta mmembers.');
       }
     } catch (error) {
       console.error('Error deleting member:', error);
@@ -489,13 +489,13 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Usimamizi wa Wanachama</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Usimamizi wa Members</h2>
           <button 
             onClick={() => setShowMemberForm(true)}
             className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors duration-200 flex items-center space-x-2"
           >
             <PlusIcon className="h-5 w-5" />
-            <span>Ongeza Mwanachama</span>
+            <span>Add Mmembers</span>
           </button>
         </div>
 
@@ -503,7 +503,7 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
       <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
         <input
           type="text"
-          placeholder="Tafuta mwanachama..."
+          placeholder="Search mmembers..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
@@ -525,8 +525,8 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mwanachama</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kundi</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mmembers</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Group</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hali</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tarehe ya Kujiunge</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vitendo</th>
@@ -545,10 +545,10 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      {member.group_names || 'Hakuna kundi'}
+                      {member.group_names || 'No kundi'}
                       {member.group_count > 0 && (
                         <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          {member.group_count} {member.group_count === 1 ? 'kundi' : 'vikundi'}
+                          {member.group_count} {member.group_count === 1 ? 'kundi' : 'groups'}
                         </span>
                       )}
                     </div>
@@ -582,7 +582,7 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
                         className="text-xs border border-gray-300 rounded px-2 py-1"
                         defaultValue=""
                       >
-                        <option value="">Ongeza kwenye kundi</option>
+                        <option value="">Add kwenye kundi</option>
                         {groups.filter(g => g.status === 'active').map(group => (
                           <option key={group.id} value={group.id}>{group.name}</option>
                         ))}
@@ -591,7 +591,7 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
                         <button
                           onClick={() => handleDeleteMember(member)}
                           className="bg-red-600 text-white px-2 py-1 rounded text-xs hover:bg-red-700 transition-colors duration-200"
-                          title="Futa Mwanachama"
+                          title="Delete Mmembers"
                         >
                           <TrashIcon className="h-3 w-3" />
                         </button>
@@ -604,8 +604,8 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
               <tr>
                 <td colSpan={5} className="px-6 py-12 text-center">
                   <div className="text-gray-500">
-                    <p className="text-lg font-medium">Hakuna wanachama bado</p>
-                    <p className="text-sm mt-1">Wanachama wataonekana hapa baada ya kujisajili kwenye tovuti</p>
+                    <p className="text-lg font-medium">No members bado</p>
+                    <p className="text-sm mt-1">Members wataonekana hapa baada ya kujisajili kwenye tovuti</p>
                   </div>
                 </td>
               </tr>
@@ -618,7 +618,7 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
       {/* Add Member Form Modal */}
       {showMemberForm && (
         <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">Mwanachama Mpya</h3>
+          <h3 className="text-lg font-semibold mb-4">Mmembers Mpya</h3>
           <form onSubmit={handleMemberSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -724,14 +724,14 @@ function MembersSection({ members, groups, loadAdminData }: { members: any[]; gr
                 type="submit"
                 className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
               >
-                Hifadhi Mwanachama
+                Save Mmembers
               </button>
               <button
                 type="button"
                 onClick={() => setShowMemberForm(false)}
                 className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
               >
-                Ghairi
+                Cancel
               </button>
             </div>
           </form>
@@ -828,7 +828,7 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
     if (!selectedGroup) return;
     
     const confirmRemove = window.confirm(
-      `Je, una uhakika unataka kuondoa "${memberName}" kwenye kundi "${selectedGroup.name}"?\n\nMwanachama ataendelea kuwa kwenye mfumo lakini hataonekana kwenye kundi hili tena.`
+      `Je, una uhakika unataka kuondoa "${memberName}" kwenye kundi "${selectedGroup.name}"?\n\nMmembers ataendelea kuwa kwenye mfumo lakini hataonekana kwenye kundi hili tena.`
     );
     
     if (!confirmRemove) return;
@@ -855,9 +855,9 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
         // Refresh main admin data
         loadAdminData();
         
-        alert(data.message || 'Mwanachama ameondolewa kwenye kundi kwa mafanikio!');
+        alert(data.message || 'Mmembers ameondolewa kwenye kundi kwa mafanikio!');
       } else {
-        alert(data.error || 'Hitilafu imetokea wakati wa kuondoa mwanachama kwenye kundi.');
+        alert(data.error || 'Hitilafu imetokea wakati wa kuondoa mmembers kwenye kundi.');
       }
     } catch (error) {
       console.error('Error removing member from group:', error);
@@ -867,7 +867,7 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
 
   const handleDeleteGroup = async (group: any) => {
     const confirmDelete = window.confirm(
-      `Je, una uhakika unataka kufuta kundi "${group.name}"?\n\nHii itafuta:\n- Kundi lote\n- Historia ya michango\n- Rekodi za uwekezaji\n- Maombi ya kujiunga\n\nHatua hii haiwezi kurudishwa!`
+      `Je, una uhakika unataka kufuta kundi "${group.name}"?\n\nHii itafuta:\n- Group lote\n- Historia ya michango\n- Rekodi za uwekezaji\n- Maombi ya kujiunga\n\nHatua hii haiwezi kurudishwa!`
     );
     
     if (!confirmDelete) return;
@@ -885,7 +885,7 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
 
       if (response.ok && data.success) {
         loadAdminData();
-        alert(data.message || 'Kundi limefutwa kwa mafanikio!');
+        alert(data.message || 'Group limefutwa kwa mafanikio!');
       } else {
         alert(data.error || 'Hitilafu imetokea wakati wa kufuta kundi.');
       }
@@ -915,7 +915,7 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
 
       if (response.ok) {
         const updatedGroup = await response.json();
-        alert('Kundi limebadilishwa kwa mafanikio!');
+        alert('Group limebadilishwa kwa mafanikio!');
         setShowEditGroup(false);
         setShowGroupDetails(false);
         loadAdminData(); // Refresh the data
@@ -944,7 +944,7 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
         setShowGroupForm(false);
         setGroupForm({ name: '', leaderId: '', monthlyContribution: '', foundedDate: new Date().toISOString().split('T')[0] });
         loadAdminData();
-        alert(data.message || 'Kundi limeanzishwa kwa mafanikio!');
+        alert(data.message || 'Group limeanzishwa kwa mafanikio!');
       } else {
         alert(data.error || 'Hitilafu imetokea wakati wa kuanzisha kundi.');
       }
@@ -957,25 +957,25 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Usimamizi wa Vikundi</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Usimamizi wa Groups</h2>
         <button 
           onClick={() => setShowGroupForm(true)}
           className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors duration-200 flex items-center space-x-2"
         >
           <PlusIcon className="h-5 w-5" />
-          <span>Anzisha Kundi Jipya</span>
+          <span>Anzisha Group Jipya</span>
         </button>
       </div>
 
       {/* Group Creation Form Modal */}
       {showGroupForm && (
         <div className="mb-6 bg-white rounded-lg shadow p-6 border border-orange-200">
-          <h3 className="text-lg font-semibold mb-4">Anzisha Kundi Jipya</h3>
+          <h3 className="text-lg font-semibold mb-4">Anzisha Group Jipya</h3>
           <form onSubmit={handleCreateGroup} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Jina la Kundi *
+                  Jina la Group *
                 </label>
                 <input
                   type="text"
@@ -988,7 +988,7 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Kiongozi wa Kundi
+                  Kiongozi wa Group
                 </label>
                 <select
                   value={groupForm.leaderId}
@@ -1034,14 +1034,14 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
                 type="submit"
                 className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors duration-200"
               >
-                Anzisha Kundi
+                Anzisha Group
               </button>
               <button
                 type="button"
                 onClick={() => setShowGroupForm(false)}
                 className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors duration-200"
               >
-                Ghairi
+                Cancel
               </button>
             </div>
           </form>
@@ -1062,8 +1062,8 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
               </div>
               
               <div className="space-y-2 text-sm text-gray-600 mb-4">
-                <p><strong>Wanachama:</strong> {group.member_count || 0}</p>
-                <p><strong>Kiongozi:</strong> {group.leader_name || 'Hakuna'}</p>
+                <p><strong>Members:</strong> {group.member_count || 0}</p>
+                <p><strong>Kiongozi:</strong> {group.leader_name || 'No'}</p>
                 <p><strong>Uwekezaji:</strong> TSH {parseFloat(group.total_investment || 0).toLocaleString()}</p>
                 <p><strong>Mchango wa Kila Mwezi:</strong> TSH {parseFloat(group.monthly_contribution || 0).toLocaleString()}</p>
               </div>
@@ -1073,18 +1073,18 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
                   onClick={() => handleViewGroup(group)}
                   className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700 transition-colors duration-200"
                 >
-                  Angalia
+                  View
                 </button>
                 <button 
                   onClick={() => handleEditGroup(group)}
                   className="flex-1 bg-gray-600 text-white px-3 py-2 rounded text-sm hover:bg-gray-700 transition-colors duration-200"
                 >
-                  Hariri
+                  Edit
                 </button>
                 <button 
                   onClick={() => handleDeleteGroup(group)}
                   className="bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700 transition-colors duration-200"
-                  title="Futa Kundi"
+                  title="Delete Group"
                 >
                   <TrashIcon className="h-4 w-4" />
                 </button>
@@ -1095,8 +1095,8 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
           <div className="col-span-full text-center py-12">
             <div className="text-gray-500">
               <UserGroupIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-              <p className="text-lg font-medium">Hakuna vikundi bado</p>
-              <p className="text-sm mt-1">Vikundi vitaonekana hapa baada ya kuanzishwa</p>
+              <p className="text-lg font-medium">No groups bado</p>
+              <p className="text-sm mt-1">Groups vitaonekana hapa baada ya kuanzishwa</p>
             </div>
           </div>
         )}
@@ -1124,7 +1124,7 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
               {/* Group Stats */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <div className="bg-blue-50 p-4 rounded-lg">
-                  <h3 className="text-sm font-medium text-blue-900">Wanachama</h3>
+                  <h3 className="text-sm font-medium text-blue-900">Members</h3>
                   <p className="text-2xl font-bold text-blue-600">{selectedGroup.member_count || 0}</p>
                 </div>
                 <div className="bg-green-50 p-4 rounded-lg">
@@ -1148,9 +1148,9 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
               {/* Group Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Maelezo ya Kundi</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Maelezo ya Group</h3>
                   <div className="space-y-2 text-sm text-gray-900">
-                    <p className="text-gray-900"><strong className="text-gray-900">Kiongozi:</strong> {selectedGroup.leader_name || 'Hakuna'}</p>
+                    <p className="text-gray-900"><strong className="text-gray-900">Kiongozi:</strong> {selectedGroup.leader_name || 'No'}</p>
                     <p className="text-gray-900"><strong className="text-gray-900">Tarehe ya Kuanzishwa:</strong> {selectedGroup.founded_date ? new Date(selectedGroup.founded_date).toLocaleDateString('sw-TZ') : 'Haijajulikana'}</p>
                     <p className="text-gray-900"><strong className="text-gray-900">Tarehe ya Kutengenezwa:</strong> {new Date(selectedGroup.created_at).toLocaleDateString('sw-TZ')}</p>
                   </div>
@@ -1168,7 +1168,7 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
               {/* Group Members */}
               <div className="bg-white border border-gray-200 rounded-lg">
                 <div className="px-4 py-3 border-b border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900">Wanachama wa Kundi</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">Members wa Group</h3>
                 </div>
                 <div className="p-4">
                   {groupMembers.length > 0 ? (
@@ -1205,7 +1205,7 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
                                    member.role === 'mwenyekiti' ? 'Mwenyekiti' :
                                    member.role === 'katibu' ? 'Katibu' :
                                    member.role === 'mwekahazina' ? 'MwekaHazina' :
-                                   'Mwanachama'}
+                                   'Mmembers'}
                                 </span>
                               </td>
                               <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
@@ -1224,7 +1224,7 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
                                   onChange={(e) => handleRoleChange(member.id, e.target.value)}
                                   className="text-xs border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                                 >
-                                  <option value="member">Mwanachama</option>
+                                  <option value="member">Mmembers</option>
                                   <option value="leader">Kiongozi</option>
                                   <option value="mwenyekiti">Mwenyekiti</option>
                                   <option value="katibu">Katibu</option>
@@ -1235,7 +1235,7 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
                                 <button
                                   onClick={() => handleRemoveFromGroup(member.id, member.full_name)}
                                   className="bg-red-600 text-white px-2 py-1 rounded text-xs hover:bg-red-700 transition-colors duration-200"
-                                  title="Ondoa kwenye Kundi"
+                                  title="Ondoa kwenye Group"
                                 >
                                   <UserMinusIcon className="h-3 w-3" />
                                 </button>
@@ -1248,8 +1248,8 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
                   ) : (
                     <div className="text-center py-8">
                       <UsersIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                      <p className="text-gray-500">Hakuna wanachama bado</p>
-                      <p className="text-sm text-gray-400 mt-1">Wanachama wataonekana hapa baada ya kuongezwa kwenye kundi</p>
+                      <p className="text-gray-500">No members bado</p>
+                      <p className="text-sm text-gray-400 mt-1">Members wataonekana hapa baada ya kuongezwa kwenye kundi</p>
                     </div>
                   )}
                 </div>
@@ -1267,7 +1267,7 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
                   onClick={() => handleEditGroup(selectedGroup)}
                   className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors duration-200"
                 >
-                  Hariri Kundi
+                  Edit Group
                 </button>
               </div>
             </div>
@@ -1281,7 +1281,7 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-gray-900">Hariri Kundi</h2>
+                <h2 className="text-xl font-bold text-gray-900">Edit Group</h2>
                 <button
                   onClick={() => setShowEditGroup(false)}
                   className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
@@ -1292,7 +1292,7 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
               
               <form onSubmit={handleUpdateGroup} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-1">Jina la Kundi</label>
+                  <label className="block text-sm font-medium text-gray-900 mb-1">Jina la Group</label>
                   <input
                     type="text"
                     value={groupForm.name}
@@ -1346,7 +1346,7 @@ function GroupsSection({ groups, loadAdminData }: { groups: any[]; loadAdminData
                     onClick={() => setShowEditGroup(false)}
                     className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors duration-200"
                   >
-                    Ghairi
+                    Cancel
                   </button>
                   <button
                     type="submit"
@@ -1429,7 +1429,7 @@ function InvestmentsSection({ investments, groups, loadAdminData }: { investment
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kundi</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Group</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kiasi</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tarehe</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hali</th>
@@ -1454,8 +1454,8 @@ function InvestmentsSection({ investments, groups, loadAdminData }: { investment
                   {investment.actual_return ? `TSH ${parseFloat(investment.actual_return).toLocaleString()}` : '-'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                  <button className="text-blue-600 hover:text-blue-900">Angalia</button>
-                  <button className="text-green-600 hover:text-green-900">Hariri</button>
+                  <button className="text-blue-600 hover:text-blue-900">View</button>
+                  <button className="text-green-600 hover:text-green-900">Edit</button>
                 </td>
               </tr>
             ))}
@@ -1521,8 +1521,8 @@ function ReportsSection({ adminStats }: { adminStats: any }) {
     let csv = `Ripoti ya Mwezi wa ${monthYear}\n\n`;
     csv += `Takwimu za Jumla\n`;
     csv += `Jina,Idadi\n`;
-    csv += `Wanachama Wapya,${stats?.newMembersThisMonth || 0}\n`;
-    csv += `Vikundi Vipya,${stats?.newGroupsThisMonth || 0}\n`;
+    csv += `Members Wapya,${stats?.newMembersThisMonth || 0}\n`;
+    csv += `Groups Vipya,${stats?.newGroupsThisMonth || 0}\n`;
     csv += `Uwekezaji Mpya,TSH ${(stats?.monthlyInvestment || 0).toLocaleString()}\n`;
     csv += `Mapato,TSH ${(stats?.monthlyReturns || 0).toLocaleString()}\n\n`;
     
@@ -1552,8 +1552,8 @@ function ReportsSection({ adminStats }: { adminStats: any }) {
     csv += `Kipimo,Thamani\n`;
     csv += `Jumla ya Uwekezaji,TSH ${(stats?.totalInvestment || 0).toLocaleString()}\n`;
     csv += `Kiwango cha Mapato,${stats?.returnRate || 0}%\n`;
-    csv += `Vikundi Vya Kazi,${stats?.totalGroups || 0}\n`;
-    csv += `Wastani wa Uwekezaji kwa Kundi,TSH ${stats?.totalGroups > 0 ? ((stats?.totalInvestment || 0) / stats.totalGroups).toLocaleString() : 0}\n\n`;
+    csv += `Groups Vya Kazi,${stats?.totalGroups || 0}\n`;
+    csv += `Wastani wa Uwekezaji kwa Group,TSH ${stats?.totalGroups > 0 ? ((stats?.totalInvestment || 0) / stats.totalGroups).toLocaleString() : 0}\n\n`;
     
     csv += `Tarehe ya Kutengeneza,${new Date().toLocaleDateString('sw-TZ')}\n`;
     
@@ -1563,8 +1563,8 @@ function ReportsSection({ adminStats }: { adminStats: any }) {
   const generateSocialImpactReportCSV = async (stats: any) => {
     let csv = `Athari za Kijamii\n\n`;
     csv += `Kipimo,Thamani\n`;
-    csv += `Wanachama Waliofaidika,${stats?.totalMembers || 0}\n`;
-    csv += `Vikundi Vilivyoanzishwa,${stats?.totalGroups || 0}\n`;
+    csv += `Members Waliofaidika,${stats?.totalMembers || 0}\n`;
+    csv += `Groups Vilivyoanzishwa,${stats?.totalGroups || 0}\n`;
     csv += `Jumla ya Uwekezaji,TSH ${(stats?.totalInvestment || 0).toLocaleString()}\n`;
     csv += `Athari za Kiuchumi,TSH ${(stats?.totalReturns || 0).toLocaleString()}\n\n`;
     
@@ -1613,7 +1613,7 @@ function ReportsSection({ adminStats }: { adminStats: any }) {
             </div>
           )) : (
             <div className="text-center py-8">
-              <p className="text-gray-500 text-sm">Hakuna takwimu za kuonyesha</p>
+              <p className="text-gray-500 text-sm">No takwimu za kuonyesha</p>
               <p className="text-gray-400 text-xs mt-1">Ripoti zitaonekana baada ya kuwa na data</p>
             </div>
           )}
@@ -1634,7 +1634,7 @@ function ReportsSection({ adminStats }: { adminStats: any }) {
             </div>
           )) : (
             <div className="text-center py-8">
-              <p className="text-gray-500 text-sm">Hakuna takwimu za kuonyesha</p>
+              <p className="text-gray-500 text-sm">No takwimu za kuonyesha</p>
               <p className="text-gray-400 text-xs mt-1">Ripoti zitaonekana baada ya kuwa na data</p>
             </div>
           )}
@@ -1858,13 +1858,13 @@ function ContentSection({ educationalContent, user, loadAdminData }: { education
           className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
           <PlusIcon className="h-5 w-5 mr-2" />
-          Ongeza Mafunzo
+          Add Mafunzo
         </button>
       </div>
 
       {showContentForm && (
         <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">{editingContent ? 'Hariri Mafunzo' : 'Mafunzo Mapya'}</h3>
+          <h3 className="text-lg font-semibold mb-4">{editingContent ? 'Edit Mafunzo' : 'Mafunzo Mapya'}</h3>
           <form onSubmit={handleContentSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -1981,7 +1981,7 @@ function ContentSection({ educationalContent, user, loadAdminData }: { education
                 type="submit"
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
               >
-                {editingContent ? 'Hifadhi Mabadiliko' : 'Hifadhi Mafunzo'}
+                {editingContent ? 'Save Mabadiliko' : 'Save Mafunzo'}
               </button>
               <button
                 type="button"
@@ -1991,7 +1991,7 @@ function ContentSection({ educationalContent, user, loadAdminData }: { education
                 }}
                 className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
               >
-                Ghairi
+                Cancel
               </button>
             </div>
           </form>
@@ -2042,7 +2042,7 @@ function ContentSection({ educationalContent, user, loadAdminData }: { education
                     }}
                     className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
                   >
-                    Hariri
+                    Edit
                   </button>
                   <button
                     onClick={() => handleTogglePublish(viewingContent.id, viewingContent.is_published)}
@@ -2086,7 +2086,7 @@ function ContentSection({ educationalContent, user, loadAdminData }: { education
                     className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
                   >
                     <PlusIcon className="h-4 w-4 inline mr-2" />
-                    Ongeza Somo
+                    Add Somo
                   </button>
                   <button
                     onClick={() => setManagingLessons(null)}
@@ -2101,7 +2101,7 @@ function ContentSection({ educationalContent, user, loadAdminData }: { education
               {showLessonForm && (
                 <div className="bg-gray-50 rounded-lg p-4 mb-6">
                   <h4 className="text-lg font-semibold mb-4">
-                    {editingLesson ? 'Hariri Somo' : 'Somo Jipya'}
+                    {editingLesson ? 'Edit Somo' : 'Somo Jipya'}
                   </h4>
                   <form onSubmit={handleLessonSubmit} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2151,7 +2151,7 @@ function ContentSection({ educationalContent, user, loadAdminData }: { education
                         type="submit"
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                       >
-                        {editingLesson ? 'Hifadhi Mabadiliko' : 'Hifadhi Somo'}
+                        {editingLesson ? 'Save Mabadiliko' : 'Save Somo'}
                       </button>
                       <button
                         type="button"
@@ -2161,7 +2161,7 @@ function ContentSection({ educationalContent, user, loadAdminData }: { education
                         }}
                         className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
                       >
-                        Ghairi
+                        Cancel
                       </button>
                     </div>
                   </form>
@@ -2204,14 +2204,14 @@ function ContentSection({ educationalContent, user, loadAdminData }: { education
                                 setShowLessonForm(true);
                               }}
                               className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50"
-                              title="Hariri"
+                              title="Edit"
                             >
                               <PencilIcon className="h-4 w-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteLesson(lesson.id)}
                               className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
-                              title="Futa"
+                              title="Delete"
                             >
                               <TrashIcon className="h-4 w-4" />
                             </button>
@@ -2223,8 +2223,8 @@ function ContentSection({ educationalContent, user, loadAdminData }: { education
                 ) : (
                   <div className="text-center py-8 text-gray-500">
                     <BookOpenIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                    <p>Hakuna masomo yaliyoongezwa bado.</p>
-                    <p className="text-sm">Bonyeza "Ongeza Somo" kuanza kuunda maudhui.</p>
+                    <p>No lessons added yet.</p>
+                    <p className="text-sm">Click &ldquo;Add Lesson&rdquo; to start creating content.</p>
                   </div>
                 )}
               </div>
@@ -2275,14 +2275,14 @@ function ContentSection({ educationalContent, user, loadAdminData }: { education
                   <button 
                     onClick={() => handleViewContent(content)}
                     className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
-                    title="Angalia"
+                    title="View"
                   >
                     <EyeIcon className="h-4 w-4" />
                   </button>
                   <button 
                     onClick={() => handleEditContent(content)}
                     className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50"
-                    title="Hariri"
+                    title="Edit"
                   >
                     <PencilIcon className="h-4 w-4" />
                   </button>
@@ -2296,7 +2296,7 @@ function ContentSection({ educationalContent, user, loadAdminData }: { education
                   <button 
                     onClick={() => handleDeleteContent(content.id)}
                     className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
-                    title="Futa"
+                    title="Delete"
                   >
                     <TrashIcon className="h-4 w-4" />
                   </button>
@@ -2379,12 +2379,12 @@ function JoinRequestsSection({ joinRequests, loadAdminData }: { joinRequests: an
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Maombi ya Kujiunga na Vikundi</h2>
+      <h2 className="text-2xl font-bold text-gray-900 mb-6">Maombi ya Kujiunga na Groups</h2>
       
       {joinRequests.length === 0 ? (
         <div className="text-center py-8">
           <UserGroupIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">Hakuna maombi ya kujiunga kwa sasa.</p>
+          <p className="text-gray-600">No maombi ya kujiunga kwa sasa.</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -2477,7 +2477,7 @@ function SettingsSection() {
           <div className="space-y-2">
             <label className="flex items-center">
               <input type="checkbox" defaultChecked className="mr-2" />
-              <span className="text-gray-700">Arifa za barua pepe kwa wanachama wapya</span>
+              <span className="text-gray-700">Arifa za barua pepe kwa members wapya</span>
             </label>
             <label className="flex items-center">
               <input type="checkbox" defaultChecked className="mr-2" />
@@ -2487,7 +2487,7 @@ function SettingsSection() {
         </div>
         
         <button className="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors duration-200">
-          Hifadhi Mabadiliko
+          Save Mabadiliko
         </button>
       </div>
     </div>

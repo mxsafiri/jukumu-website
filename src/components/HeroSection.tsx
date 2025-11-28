@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ChevronDownIcon, ArrowTrendingUpIcon, CurrencyDollarIcon, ArrowRightIcon, PlayIcon } from '@heroicons/react/24/outline';
 
@@ -54,10 +55,10 @@ export default function HeroSection() {
                   <ArrowRightIcon className="h-5 w-5 mr-2" />
                   Jiunge
                 </a>
-                <button className="inline-flex items-center justify-center px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-lg border border-white/20 hover:bg-white/20 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                <Link href="/learn" className="inline-flex items-center justify-center px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-lg border border-white/20 hover:bg-white/20 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
                   <PlayIcon className="h-5 w-5 mr-2" />
                   {t('hero.learn_more')}
-                </button>
+                </Link>
               </div>
 
             </div>

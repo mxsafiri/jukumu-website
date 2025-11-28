@@ -40,6 +40,13 @@ export default function MemberDashboard() {
         return;
       }
       
+      // Check URL parameters for section navigation
+      const urlParams = new URLSearchParams(window.location.search);
+      const section = urlParams.get('section');
+      if (section) {
+        setActiveSection(section);
+      }
+      
       // First verify user-to-member mapping
       verifyUserMemberMapping(parsedUser.id);
     } else {
@@ -139,25 +146,25 @@ export default function MemberDashboard() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Inapakia...</p>
+          <p className="mt-4 text-gray-600">Loading...</p>
         </div>
       </div>
     );
   }
 
   const menuItems = [
-    { id: 'overview', name: 'Muhtasari', icon: ChartBarIcon },
-    { id: 'profile', name: 'Wasifu', icon: UserIcon },
-    { id: 'group', name: 'Kundi Langu', icon: UserGroupIcon },
-    { id: 'investments', name: 'Uwekezaji Wangu', icon: CurrencyDollarIcon },
-    { id: 'learning', name: 'Mafunzo', icon: AcademicCapIcon },
-    { id: 'settings', name: 'Mipangilio', icon: CogIcon },
+    { id: 'overview', name: 'Overview', icon: ChartBarIcon },
+    { id: 'profile', name: 'Profile', icon: UserIcon },
+    { id: 'group', name: 'My Group', icon: UserGroupIcon },
+    { id: 'investments', name: 'My Investments', icon: CurrencyDollarIcon },
+    { id: 'learning', name: 'Training', icon: AcademicCapIcon },
+    { id: 'settings', name: 'Settings', icon: CogIcon },
   ];
 
   const renderContent = () => {
     switch (activeSection) {
       case 'overview':
-        return <MemberOverviewSection memberProfile={memberProfile} memberInvestments={memberInvestments} recentActivities={recentActivities} />;
+        return <MemberOverviewSection memberProfile={memberProfile} memberInvestments={memberInvestments} recentActivities={recentActivities} onNavigate={setActiveSection} />;
       case 'profile':
         return <ProfileSection memberProfile={memberProfile} user={user} loadMemberData={() => loadMemberData(user?.id || 0)} />;
       case 'group':
@@ -169,7 +176,7 @@ export default function MemberDashboard() {
       case 'settings':
         return <MemberSettingsSection />;
       default:
-        return <MemberOverviewSection memberProfile={memberProfile} memberInvestments={memberInvestments} recentActivities={recentActivities} />;
+        return <MemberOverviewSection memberProfile={memberProfile} memberInvestments={memberInvestments} recentActivities={recentActivities} onNavigate={setActiveSection} />;
     }
   };
 
@@ -185,7 +192,7 @@ export default function MemberDashboard() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">JUKUMU</h1>
-                <p className="text-sm text-gray-600">Karibu, {user.fullName || user.email}</p>
+                <p className="text-sm text-gray-600">Welcome, {user.fullName || user.email}</p>
               </div>
             </div>
             <button
@@ -193,7 +200,7 @@ export default function MemberDashboard() {
               className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors duration-200"
             >
               <ArrowRightOnRectangleIcon className="h-5 w-5" />
-              <span>Toka</span>
+              <span>Logout</span>
             </button>
           </div>
         </div>
@@ -240,22 +247,22 @@ export default function MemberDashboard() {
   );
 }
 
-function MemberOverviewSection({ memberProfile, memberInvestments, recentActivities }: { memberProfile: any; memberInvestments: any[]; recentActivities: any[] }) {
+function MemberOverviewSection({ memberProfile, memberInvestments, recentActivities, onNavigate }: { memberProfile: any; memberInvestments: any[]; recentActivities: any[]; onNavigate: (section: string) => void }) {
   const totalInvestment = memberInvestments.reduce((sum, inv) => sum + parseFloat(inv.amount || 0), 0);
   const expectedReturns = memberInvestments.reduce((sum, inv) => sum + parseFloat(inv.expected_return || 0), 0);
   
   const stats = [
-    { name: 'Hali ya Uanachama', value: memberProfile?.status === 'active' ? 'Hai' : 'Inasubiri', color: memberProfile?.status === 'active' ? 'bg-green-500' : 'bg-yellow-500' },
-    { name: 'Kundi Langu', value: memberProfile?.group_name || 'Hakuna', color: 'bg-blue-500' },
-    { name: 'Uwekezaji Wangu', value: totalInvestment > 0 ? `TSH ${totalInvestment.toLocaleString()}` : 'TSH 0', color: 'bg-orange-500' },
-    { name: 'Mapato Yanayotarajiwa', value: expectedReturns > 0 ? `TSH ${expectedReturns.toLocaleString()}` : 'TSH 0', color: 'bg-purple-500' },
+    { name: 'Membership Status', value: memberProfile?.status === 'active' ? 'Active' : 'Pending', color: memberProfile?.status === 'active' ? 'bg-green-500' : 'bg-yellow-500' },
+    { name: 'My Group', value: memberProfile?.group_name || 'None', color: 'bg-blue-500' },
+    { name: 'My Investment', value: totalInvestment > 0 ? `TSH ${totalInvestment.toLocaleString()}` : 'TSH 0', color: 'bg-orange-500' },
+    { name: 'Expected Returns', value: expectedReturns > 0 ? `TSH ${expectedReturns.toLocaleString()}` : 'TSH 0', color: 'bg-purple-500' },
   ];
 
   const displayActivities = recentActivities.length > 0 ? recentActivities.map(activity => ({
     action: activity.action_text,
-    time: new Date(activity.activity_date).toLocaleDateString('sw-TZ')
+    time: new Date(activity.activity_date).toLocaleDateString('en-US')
   })) : [
-    { action: 'Umejiunge na JUKUMU', time: memberProfile?.created_at ? new Date(memberProfile.created_at).toLocaleDateString('sw-TZ') : 'Leo' }
+    { action: 'Joined JUKUMU', time: memberProfile?.created_at ? new Date(memberProfile.created_at).toLocaleDateString('en-US') : 'Today' }
   ];
 
   return (
@@ -280,7 +287,7 @@ function MemberOverviewSection({ memberProfile, memberInvestments, recentActivit
       {/* Recent Activities */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Shughuli za Hivi Karibuni</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activities</h3>
           <div className="space-y-4">
             {displayActivities.slice(0, 4).map((activity, index) => (
               <div key={index} className="flex items-start space-x-3">
@@ -296,24 +303,33 @@ function MemberOverviewSection({ memberProfile, memberInvestments, recentActivit
 
         {/* Quick Actions */}
         <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Vitendo vya Haraka</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
           <div className="space-y-3">
-            <button className="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+            <button 
+              onClick={() => onNavigate('learning')}
+              className="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-orange-50 hover:border-orange-300 transition-colors duration-200"
+            >
               <div className="flex items-center space-x-3">
                 <BookOpenIcon className="h-5 w-5 text-orange-600" />
-                <span className="text-sm font-medium">Soma Mafunzo Mapya</span>
+                <span className="text-sm font-medium text-gray-900">View Training</span>
               </div>
             </button>
-            <button className="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+            <button 
+              onClick={() => onNavigate('group')}
+              className="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors duration-200"
+            >
               <div className="flex items-center space-x-3">
                 <UserGroupIcon className="h-5 w-5 text-blue-600" />
-                <span className="text-sm font-medium">Jiunge na Kundi</span>
+                <span className="text-sm font-medium text-gray-900">View Group</span>
               </div>
             </button>
-            <button className="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+            <button 
+              onClick={() => onNavigate('investments')}
+              className="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-green-50 hover:border-green-300 transition-colors duration-200"
+            >
               <div className="flex items-center space-x-3">
                 <CurrencyDollarIcon className="h-5 w-5 text-green-600" />
-                <span className="text-sm font-medium">Ongeza Uwekezaji</span>
+                <span className="text-sm font-medium text-gray-900">Track Investments</span>
               </div>
             </button>
           </div>
@@ -371,18 +387,18 @@ function ProfileSection({ memberProfile, user, loadMemberData }: { memberProfile
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Wasifu Wangu</h2>
+        <h2 className="text-2xl font-bold text-gray-900">My Profile</h2>
         <button
           onClick={() => isEditing ? handleSave() : setIsEditing(true)}
           className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
         >
-          {isEditing ? 'Hifadhi' : 'Hariri'}
+          {isEditing ? 'Save' : 'Edit'}
         </button>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Jina Kamili</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
           <input
             type="text"
             value={formData.fullName}
@@ -392,7 +408,7 @@ function ProfileSection({ memberProfile, user, loadMemberData }: { memberProfile
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Barua Pepe</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
           <input
             type="email"
             value={memberProfile?.email || user?.email || ''}
@@ -401,7 +417,7 @@ function ProfileSection({ memberProfile, user, loadMemberData }: { memberProfile
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Simu</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
           <input
             type="tel"
             value={formData.phone}
@@ -411,7 +427,7 @@ function ProfileSection({ memberProfile, user, loadMemberData }: { memberProfile
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Mahali</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
           <input
             type="text"
             value={formData.location}
@@ -421,7 +437,7 @@ function ProfileSection({ memberProfile, user, loadMemberData }: { memberProfile
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Aina ya Biashara</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Business Type</label>
           <input
             type="text"
             value={formData.businessType}
@@ -431,7 +447,7 @@ function ProfileSection({ memberProfile, user, loadMemberData }: { memberProfile
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Jina la Biashara</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Business Name</label>
           <input
             type="text"
             value={formData.businessName}
@@ -443,7 +459,7 @@ function ProfileSection({ memberProfile, user, loadMemberData }: { memberProfile
       </div>
       
       <div className="mt-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">Maelezo ya Biashara</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Business Description</label>
         <textarea
           value={formData.businessDescription}
           onChange={(e) => setFormData({...formData, businessDescription: e.target.value})}
@@ -455,7 +471,7 @@ function ProfileSection({ memberProfile, user, loadMemberData }: { memberProfile
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Mapato ya Kila Mwezi (TSH)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Monthly Revenue (TSH)</label>
           <input
             type="number"
             value={formData.monthlyRevenue}
@@ -465,7 +481,7 @@ function ProfileSection({ memberProfile, user, loadMemberData }: { memberProfile
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Idadi ya Wafanyakazi</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Employee Count</label>
           <input
             type="number"
             value={formData.employeeCount}
@@ -552,11 +568,11 @@ function MyGroupSection({ memberProfile }: { memberProfile: any }) {
           loadJoinRequests(data.memberInfo.memberId);
         }
       } else {
-        alert(data.error || 'Hitilafu imetokea');
+        alert(data.error || 'An error occurred');
       }
     } catch (error) {
       console.error('Error sending join request:', error);
-      alert('Hitilafu imetokea wakati wa kutuma ombi');
+      alert('An error occurred while sending request');
     } finally {
       setLoading(false);
     }
@@ -569,9 +585,9 @@ function MyGroupSection({ memberProfile }: { memberProfile: any }) {
       rejected: 'bg-red-100 text-red-800'
     };
     const labels = {
-      pending: 'Inasubiri',
-      approved: 'Imekubaliwa',
-      rejected: 'Imekataliwa'
+      pending: 'Pending',
+      approved: 'Approved',
+      rejected: 'Rejected'
     };
     return (
       <span className={`px-2 py-1 text-xs font-medium rounded-full ${badges[status as keyof typeof badges] || 'bg-gray-100 text-gray-800'}`}>
@@ -582,18 +598,18 @@ function MyGroupSection({ memberProfile }: { memberProfile: any }) {
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Kundi Langu</h2>
+      <h2 className="text-2xl font-bold text-gray-900 mb-6">My Group</h2>
       
       {memberProfile?.group_name ? (
         <div className="space-y-4">
           <div className="border border-gray-200 rounded-lg p-4">
             <h3 className="text-lg font-semibold text-gray-900">{memberProfile.group_name}</h3>
-            <p className="text-sm text-gray-600 mt-1">Nafasi: {memberProfile.group_role || 'Mwanachama'}</p>
+            <p className="text-sm text-gray-600 mt-1">Role: {memberProfile.group_role || 'Member'}</p>
             <div className="mt-4 grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm font-medium text-gray-700">Hali</p>
+                <p className="text-sm font-medium text-gray-700">Status</p>
                 <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                  Hai
+                  Active
                 </span>
               </div>
             </div>
@@ -604,28 +620,28 @@ function MyGroupSection({ memberProfile }: { memberProfile: any }) {
           {/* No Group Message */}
           <div className="text-center py-8">
             <UserGroupIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 mb-4">Haujajiunga na kundi lolote bado.</p>
+            <p className="text-gray-600 mb-4">You haven&apos;t joined any group yet.</p>
             <button 
               onClick={() => setShowAvailableGroups(!showAvailableGroups)}
               className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
             >
-              {showAvailableGroups ? 'Ficha Vikundi' : 'Jiunge na Kundi'}
+              {showAvailableGroups ? 'Hide Groups' : 'Join a Group'}
             </button>
           </div>
 
           {/* Join Requests Status */}
           {joinRequests.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Maombi Yangu</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">My Requests</h3>
               <div className="space-y-3">
                 {joinRequests.map((request) => (
                   <div key={request.id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex justify-between items-start">
                       <div>
                         <h4 className="font-medium text-gray-900">{request.group_name}</h4>
-                        <p className="text-sm text-gray-600">Mchango: TSH {parseInt(request.monthly_contribution).toLocaleString()}/mwezi</p>
+                        <p className="text-sm text-gray-600">Contribution: TSH {parseInt(request.monthly_contribution).toLocaleString()}/month</p>
                         <p className="text-xs text-gray-500 mt-1">
-                          Imetumwa: {new Date(request.created_at).toLocaleDateString('sw-TZ')}
+                          Sent: {new Date(request.created_at).toLocaleDateString('en-US')}
                         </p>
                       </div>
                       <div>
@@ -641,9 +657,9 @@ function MyGroupSection({ memberProfile }: { memberProfile: any }) {
           {/* Available Groups */}
           {showAvailableGroups && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Vikundi Vinavyopatikana</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Available Groups</h3>
               {availableGroups.length === 0 ? (
-                <p className="text-gray-600 text-center py-4">Hakuna vikundi vinavyopatikana kwa sasa.</p>
+                <p className="text-gray-600 text-center py-4">No groups available at the moment.</p>
               ) : (
                 <div className="grid gap-4">
                   {availableGroups.map((group) => (
@@ -651,15 +667,15 @@ function MyGroupSection({ memberProfile }: { memberProfile: any }) {
                       <div className="flex justify-between items-start mb-3">
                         <div>
                           <h4 className="font-semibold text-gray-900">{group.name}</h4>
-                          <p className="text-sm text-gray-600">Kiongozi: {group.leader_name || 'Hajaainishwa'}</p>
-                          <p className="text-sm text-gray-600">Wanachama: {group.member_count}</p>
+                          <p className="text-sm text-gray-600">Leader: {group.leader_name || 'Not assigned'}</p>
+                          <p className="text-sm text-gray-600">Members: {group.member_count}</p>
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-medium text-orange-600">
-                            TSH {parseInt(group.monthly_contribution).toLocaleString()}/mwezi
+                            TSH {parseInt(group.monthly_contribution).toLocaleString()}/month
                           </p>
                           <p className="text-xs text-gray-500">
-                            Ilianzishwa: {new Date(group.founded_date).toLocaleDateString('sw-TZ')}
+                            Founded: {new Date(group.founded_date).toLocaleDateString('en-US')}
                           </p>
                         </div>
                       </div>
@@ -667,14 +683,14 @@ function MyGroupSection({ memberProfile }: { memberProfile: any }) {
                       {/* Check if already requested */}
                       {joinRequests.some(req => req.group_id === group.id && req.status === 'pending') ? (
                         <button disabled className="w-full px-4 py-2 bg-gray-300 text-gray-600 rounded-lg cursor-not-allowed">
-                          Ombi Limetumwa
+                          Request Sent
                         </button>
                       ) : (
                         <button 
                           onClick={() => setSelectedGroup(group)}
                           className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
                         >
-                          Omba Kujiunga
+                          Request to Join
                         </button>
                       )}
                     </div>
@@ -691,20 +707,20 @@ function MyGroupSection({ memberProfile }: { memberProfile: any }) {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Omba Kujiunga na {selectedGroup.name}
+              Request to Join {selectedGroup.name}
             </h3>
             
             <div className="mb-4">
-              <p className="text-sm text-gray-600 mb-2">Mchango wa kila mwezi: TSH {parseInt(selectedGroup.monthly_contribution).toLocaleString()}</p>
-              <p className="text-sm text-gray-600 mb-4">Kiongozi: {selectedGroup.leader_name || 'Hajaainishwa'}</p>
+              <p className="text-sm text-gray-600 mb-2">Monthly Contribution: TSH {parseInt(selectedGroup.monthly_contribution).toLocaleString()}</p>
+              <p className="text-sm text-gray-600 mb-4">Leader: {selectedGroup.leader_name || 'Not assigned'}</p>
               
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Ujumbe (si lazima)
+                Message (optional)
               </label>
               <textarea
                 value={joinMessage}
                 onChange={(e) => setJoinMessage(e.target.value)}
-                placeholder="Eleza kwa nini ungependa kujiunga na kundi hili..."
+                placeholder="Explain why you would like to join this group..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-md resize-none"
                 rows={3}
               />
@@ -718,14 +734,14 @@ function MyGroupSection({ memberProfile }: { memberProfile: any }) {
                 }}
                 className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
               >
-                Ghairi
+                Cancel
               </button>
               <button
                 onClick={() => handleJoinRequest(selectedGroup.id)}
                 disabled={loading}
                 className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
               >
-                {loading ? 'Inatuma...' : 'Tuma Ombi'}
+                {loading ? 'Sending...' : 'Send Request'}
               </button>
             </div>
           </div>
@@ -741,20 +757,20 @@ function MyInvestmentsSection({ memberInvestments }: { memberInvestments: any[] 
   
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Uwekezaji Wangu</h2>
+      <h2 className="text-2xl font-bold text-gray-900 mb-6">My Investments</h2>
       
       {/* Investment Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-blue-50 p-4 rounded-lg">
-          <h3 className="text-sm font-medium text-blue-900">Jumla ya Uwekezaji</h3>
+          <h3 className="text-sm font-medium text-blue-900">Total Investment</h3>
           <p className="text-xl font-bold text-blue-600">TSH {totalInvestment.toLocaleString()}</p>
         </div>
         <div className="bg-green-50 p-4 rounded-lg">
-          <h3 className="text-sm font-medium text-green-900">Mapato Halisi</h3>
+          <h3 className="text-sm font-medium text-green-900">Actual Returns</h3>
           <p className="text-xl font-bold text-green-600">TSH {totalReturns.toLocaleString()}</p>
         </div>
         <div className="bg-orange-50 p-4 rounded-lg">
-          <h3 className="text-sm font-medium text-orange-900">Kiwango cha Mapato</h3>
+          <h3 className="text-sm font-medium text-orange-900">Return Rate</h3>
           <p className="text-xl font-bold text-orange-600">
             {totalInvestment > 0 ? ((totalReturns / totalInvestment) * 100).toFixed(1) : 0}%
           </p>
@@ -769,29 +785,29 @@ function MyInvestmentsSection({ memberInvestments }: { memberInvestments: any[] 
               <div className="flex justify-between items-start">
                 <div>
                   <h3 className="font-semibold text-gray-900">{investment.group_name}</h3>
-                  <p className="text-sm text-gray-600">Tarehe: {new Date(investment.investment_date).toLocaleDateString('sw-TZ')}</p>
+                  <p className="text-sm text-gray-600">Date: {new Date(investment.investment_date).toLocaleDateString('en-US')}</p>
                 </div>
                 <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                   investment.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                 }`}>
-                  {investment.status === 'active' ? 'Hai' : 'Inasubiri'}
+                  {investment.status === 'active' ? 'Active' : 'Pending'}
                 </span>
               </div>
               <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                 <div>
-                  <p className="text-gray-600">Kiasi</p>
+                  <p className="text-gray-600">Amount</p>
                   <p className="font-medium">TSH {parseFloat(investment.amount).toLocaleString()}</p>
                 </div>
                 <div>
-                  <p className="text-gray-600">Asilimia</p>
+                  <p className="text-gray-600">Equity</p>
                   <p className="font-medium">{investment.equity_percentage}%</p>
                 </div>
                 <div>
-                  <p className="text-gray-600">Mapato Yanayotarajiwa</p>
+                  <p className="text-gray-600">Expected Returns</p>
                   <p className="font-medium">TSH {parseFloat(investment.expected_return || 0).toLocaleString()}</p>
                 </div>
                 <div>
-                  <p className="text-gray-600">Mapato Halisi</p>
+                  <p className="text-gray-600">Actual Returns</p>
                   <p className="font-medium">TSH {parseFloat(investment.actual_return || 0).toLocaleString()}</p>
                 </div>
               </div>
@@ -801,7 +817,7 @@ function MyInvestmentsSection({ memberInvestments }: { memberInvestments: any[] 
       ) : (
         <div className="text-center py-8">
           <CurrencyDollarIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">Huna uwekezaji wowote bado.</p>
+          <p className="text-gray-600">You don&apos;t have any investments yet.</p>
         </div>
       )}
     </div>
@@ -833,11 +849,11 @@ function LearningSection({ memberTraining, user }: { memberTraining: any[]; user
           setCurrentLesson(lessons[0]);
         }
       } else {
-        alert('Hitilafu imetokea wakati wa kupakia mafunzo');
+        alert('An error occurred while loading training');
       }
     } catch (error) {
       console.error('Error loading training:', error);
-      alert('Hitilafu imetokea wakati wa kupakia mafunzo');
+      alert('An error occurred while loading training');
     } finally {
       setLoading(false);
     }
@@ -861,14 +877,14 @@ function LearningSection({ memberTraining, user }: { memberTraining: any[]; user
         }
         
         if (completed) {
-          alert('Hongera! Umekamilisha somo hili.');
+          alert('Congratulations! You have completed this lesson.');
         }
       } else {
-        alert('Hitilafu imetokea wakati wa kusajili maendeleo');
+        alert('An error occurred while recording progress');
       }
     } catch (error) {
       console.error('Error updating lesson progress:', error);
-      alert('Hitilafu imetokea wakati wa kusajili maendeleo');
+      alert('An error occurred while recording progress');
     }
   };
 
@@ -914,14 +930,14 @@ function LearningSection({ memberTraining, user }: { memberTraining: any[]; user
               }}
               className="text-blue-600 hover:text-blue-800 mb-2 flex items-center"
             >
-              ← Rudi kwenye Mafunzo
+              ← Back to Training
             </button>
             <h2 className="text-2xl font-bold text-gray-900">{selectedTraining.title}</h2>
             <p className="text-gray-600">{selectedTraining.description}</p>
           </div>
           <div className="text-right">
             <div className="text-sm text-gray-500">
-              Maendeleo: {trainingDetails.completedLessons}/{trainingDetails.totalLessons} masomo
+              Progress: {trainingDetails.completedLessons}/{trainingDetails.totalLessons} lessons
             </div>
             <div className="w-32 bg-gray-200 rounded-full h-2 mt-1">
               <div 
@@ -935,7 +951,7 @@ function LearningSection({ memberTraining, user }: { memberTraining: any[]; user
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Lessons Sidebar */}
           <div className="lg:col-span-1">
-            <h3 className="font-semibold text-gray-900 mb-4">Masomo</h3>
+            <h3 className="font-semibold text-gray-900 mb-4">Lessons</h3>
             <div className="space-y-2">
               {trainingDetails.lessons.map((lesson: any, index: number) => (
                 <button
@@ -950,7 +966,7 @@ function LearningSection({ memberTraining, user }: { memberTraining: any[]; user
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="font-medium text-sm">{lesson.title}</div>
-                      <div className="text-xs text-gray-500">{lesson.duration_minutes} dakika</div>
+                      <div className="text-xs text-gray-500">{lesson.duration_minutes} minutes</div>
                     </div>
                     {lesson.completed && (
                       <span className="text-green-600 text-sm">✓</span>
@@ -968,7 +984,7 @@ function LearningSection({ memberTraining, user }: { memberTraining: any[]; user
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-xl font-semibold text-gray-900">{currentLesson.title}</h3>
                   <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-500">{currentLesson.duration_minutes} dakika</span>
+                    <span className="text-sm text-gray-500">{currentLesson.duration_minutes} minutes</span>
                     <button
                       onClick={() => handleLessonComplete(currentLesson.id, !currentLesson.completed)}
                       className={`px-4 py-2 rounded-lg text-sm font-medium ${
@@ -977,7 +993,7 @@ function LearningSection({ memberTraining, user }: { memberTraining: any[]; user
                           : 'bg-blue-600 text-white hover:bg-blue-700'
                       }`}
                     >
-                      {currentLesson.completed ? 'Umekamilisha ✓' : 'Kamilisha Somo'}
+                      {currentLesson.completed ? 'Completed ✓' : 'Complete Lesson'}
                     </button>
                   </div>
                 </div>
@@ -1001,7 +1017,7 @@ function LearningSection({ memberTraining, user }: { memberTraining: any[]; user
                     disabled={trainingDetails.lessons.findIndex((l: any) => l.id === currentLesson.id) === 0}
                     className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    ← Somo la Awali
+                    ← Previous Lesson
                   </button>
                   
                   <button
@@ -1014,14 +1030,14 @@ function LearningSection({ memberTraining, user }: { memberTraining: any[]; user
                     disabled={trainingDetails.lessons.findIndex((l: any) => l.id === currentLesson.id) === trainingDetails.lessons.length - 1}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Somo Linalofuata →
+                    Next Lesson →
                   </button>
                 </div>
               </div>
             ) : (
               <div className="text-center py-12">
                 <BookOpenIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">Chagua somo kutoka upande wa kushoto kuanza kusoma.</p>
+                <p className="text-gray-600">Select a lesson from the left sidebar to start reading.</p>
               </div>
             )}
           </div>
@@ -1033,7 +1049,7 @@ function LearningSection({ memberTraining, user }: { memberTraining: any[]; user
   // Show training modules list
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Mafunzo</h2>
+      <h2 className="text-2xl font-bold text-gray-900 mb-6">Training</h2>
       
       {memberTraining.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1046,18 +1062,18 @@ function LearningSection({ memberTraining, user }: { memberTraining: any[]; user
                   training.progress_status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
                   'bg-gray-100 text-gray-800'
                 }`}>
-                  {training.progress_status === 'completed' ? 'Umekamilisha' :
-                   training.progress_status === 'in_progress' ? 'Unaendelea' :
-                   'Haujajanza'}
+                  {training.progress_status === 'completed' ? 'Completed' :
+                   training.progress_status === 'in_progress' ? 'In Progress' :
+                   'Not Started'}
                 </span>
               </div>
               
               <p className="text-sm text-gray-600 mb-3">{training.description}</p>
               
               <div className="flex justify-between items-center text-xs text-gray-500 mb-3">
-                <span>Kategoria: {training.category}</span>
-                <span>Kiwango: {training.level}</span>
-                <span>Muda: {training.duration_hours}h</span>
+                <span>Category: {training.category}</span>
+                <span>Level: {training.level}</span>
+                <span>Duration: {training.duration_hours}h</span>
               </div>
               
               <div className="flex space-x-2">
@@ -1066,26 +1082,26 @@ function LearningSection({ memberTraining, user }: { memberTraining: any[]; user
                   disabled={loading}
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
                 >
-                  {loading ? 'Inapakia...' : 'Angalia Masomo'}
+                  {loading ? 'Loading...' : 'View Lessons'}
                 </button>
                 
                 {training.progress_status === 'completed' ? (
                   <div className="flex items-center px-3 py-2 bg-green-100 text-green-800 rounded-lg">
-                    <span className="text-sm font-medium">✓ Umekamilisha</span>
+                    <span className="text-sm font-medium">✓ Completed</span>
                   </div>
                 ) : training.progress_status === 'in_progress' ? (
                   <button
                     onClick={() => handleCompleteTraining(training.id)}
                     className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                   >
-                    Kamilisha
+                    Complete
                   </button>
                 ) : (
                   <button
                     onClick={() => handleStartTraining(training.id)}
                     className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
                   >
-                    Anza
+                    Start
                   </button>
                 )}
               </div>
@@ -1095,7 +1111,7 @@ function LearningSection({ memberTraining, user }: { memberTraining: any[]; user
       ) : (
         <div className="text-center py-8">
           <BookOpenIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">Hakuna mafunzo yaliyopatikana.</p>
+          <p className="text-gray-600">No training available.</p>
         </div>
       )}
     </div>
@@ -1105,8 +1121,8 @@ function LearningSection({ memberTraining, user }: { memberTraining: any[]; user
 function MemberSettingsSection() {
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Mipangilio</h2>
-      <p className="text-gray-600">Mipangilio ya akaunti yako.</p>
+      <h2 className="text-2xl font-bold text-gray-900 mb-6">Settings</h2>
+      <p className="text-gray-600">Your account settings.</p>
     </div>
   );
 }
