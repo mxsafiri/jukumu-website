@@ -1,6 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 
+let cachedGroupMembersHasUpdatedAt: boolean | null = null;
+
+async function getGroupMembersHasUpdatedAt(client: { query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }> }) {
+  if (cachedGroupMembersHasUpdatedAt !== null) return cachedGroupMembersHasUpdatedAt;
+
+  const res = await client.query(
+    `
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'group_members'
+      AND column_name = 'updated_at'
+    LIMIT 1
+    `
+  );
+
+  cachedGroupMembersHasUpdatedAt = res.rows.length > 0;
+  return cachedGroupMembersHasUpdatedAt;
+}
+
 // Get group leadership roles
 export async function GET(
   request: NextRequest,
@@ -94,12 +114,22 @@ export async function PUT(
       }
       
       // Update the member's role
-      const result = await client.query(`
-        UPDATE group_members 
-        SET role = $1, updated_at = CURRENT_TIMESTAMP
-        WHERE group_id = $2 AND member_id = $3
-        RETURNING *
-      `, [role, id, memberId]);
+      const hasUpdatedAt = await getGroupMembersHasUpdatedAt(client);
+      const updateSql = hasUpdatedAt
+        ? `
+          UPDATE group_members
+          SET role = $1, updated_at = CURRENT_TIMESTAMP
+          WHERE group_id = $2 AND member_id = $3
+          RETURNING *
+          `
+        : `
+          UPDATE group_members
+          SET role = $1
+          WHERE group_id = $2 AND member_id = $3
+          RETURNING *
+          `;
+
+      const result = await client.query(updateSql, [role, id, memberId]);
       
       client.release();
       
@@ -125,6 +155,13 @@ export async function PUT(
         return NextResponse.json({ 
           error: 'Nafasi hii haijaidhinishwa bado. Tumia "/api/admin/update-schema" kwanza kubadilisha mfumo wa data.',
           details: 'Database schema needs to be updated to support new leadership roles'
+        }, { status: 400 });
+      }
+
+      if (dbError instanceof Error && dbError.message.includes('updated_at')) {
+        return NextResponse.json({
+          error: 'Tafadhali sasisha mfumo wa data (schema) kisha jaribu tena.',
+          details: dbError.message
         }, { status: 400 });
       }
       
