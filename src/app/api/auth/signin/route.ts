@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import type { PoolClient } from 'pg';
+import type { PoolClient, QueryResult } from 'pg';
 
 let cachedPasswordColumn: 'password_hash' | 'password' | null = null;
 
@@ -40,18 +40,30 @@ function isBcryptHash(value: string) {
   return value.startsWith('$2a$') || value.startsWith('$2b$') || value.startsWith('$2y$');
 }
 
-function serverError(code: string, details?: string) {
-  return NextResponse.json(
+function makeRequestId() {
+  try {
+    return crypto.randomUUID();
+  } catch {
+    return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  }
+}
+
+function serverError(code: string, requestId: string, details?: string) {
+  const response = NextResponse.json(
     {
       error: `Internal server error (${code})`,
+      requestId,
       details: process.env.NODE_ENV === 'development' ? details : undefined
     },
     { status: 500 }
   );
+  response.headers.set('x-request-id', requestId);
+  return response;
 }
 
 export async function POST(request: NextRequest) {
   let client: PoolClient | null = null;
+  const requestId = makeRequestId();
 
   try {
     const body = await request.json();
@@ -70,34 +82,51 @@ export async function POST(request: NextRequest) {
       client = await pool.connect();
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      return serverError('DB_CONNECT_FAILED', msg);
+      console.error('Signin error (DB_CONNECT_FAILED):', requestId, e);
+      return serverError('DB_CONNECT_FAILED', requestId, msg);
     }
 
-    const passwordColumn = await getPasswordColumn(client);
+    let passwordColumn: 'password_hash' | 'password' | null = null;
+    try {
+      passwordColumn = await getPasswordColumn(client);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error('Signin error (PASSWORD_COLUMN_LOOKUP_FAILED):', requestId, e);
+      return serverError('PASSWORD_COLUMN_LOOKUP_FAILED', requestId, msg);
+    }
+
     if (!passwordColumn) {
-      return serverError('PASSWORD_COLUMN_NOT_FOUND');
+      console.error('Signin error (PASSWORD_COLUMN_NOT_FOUND):', requestId);
+      return serverError('PASSWORD_COLUMN_NOT_FOUND', requestId);
     }
 
-    const result = isEmail
-      ? await client.query(
-          `
-          SELECT u.id, u.email, u.${passwordColumn} as password_hash, u.full_name, u.role
-          FROM users u
-          WHERE lower(u.email) = lower($1)
-          LIMIT 1
-          `,
-          [identifier]
-        )
-      : await client.query(
-          `
-          SELECT u.id, u.email, u.${passwordColumn} as password_hash, u.full_name, u.role
-          FROM users u
-          LEFT JOIN members m ON (m.user_id = u.id OR lower(m.email) = lower(u.email))
-          WHERE $1 IS NOT NULL
-          AND regexp_replace(coalesce(m.phone, ''), '\\D', '', 'g') = $1
-          `,
-          [normalizedPhone]
-        );
+    let result: QueryResult;
+    try {
+      result = isEmail
+        ? await client.query(
+            `
+            SELECT u.id, u.email, u.${passwordColumn} as password_hash, u.full_name, u.role
+            FROM users u
+            WHERE lower(u.email) = lower($1)
+            LIMIT 1
+            `,
+            [identifier]
+          )
+        : await client.query(
+            `
+            SELECT u.id, u.email, u.${passwordColumn} as password_hash, u.full_name, u.role
+            FROM users u
+            LEFT JOIN members m ON (m.user_id = u.id OR lower(m.email) = lower(u.email))
+            WHERE $1 IS NOT NULL
+            AND regexp_replace(coalesce(m.phone, ''), '\\D', '', 'g') = $1
+            `,
+            [normalizedPhone]
+          );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error('Signin error (USER_LOOKUP_FAILED):', requestId, e);
+      return serverError('USER_LOOKUP_FAILED', requestId, msg);
+    }
 
     if (result.rows.length === 0) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
@@ -150,7 +179,8 @@ export async function POST(request: NextRequest) {
     // Create JWT token
     const jwtSecret = process.env.JWT_SECRET;
     if (process.env.NODE_ENV === 'production' && !jwtSecret) {
-      return serverError('MISSING_JWT_SECRET');
+      console.error('Signin error (MISSING_JWT_SECRET):', requestId);
+      return serverError('MISSING_JWT_SECRET', requestId);
     }
 
     const token = jwt.sign(
@@ -183,9 +213,9 @@ export async function POST(request: NextRequest) {
     return response;
 
   } catch (error) {
-    console.error('Signin error:', error);
+    console.error('Signin error (UNHANDLED):', requestId, error);
     const details = error instanceof Error ? error.message : String(error);
-    return serverError('UNHANDLED', details);
+    return serverError('UNHANDLED', requestId, details);
   } finally {
     client?.release();
   }
