@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import type { PoolClient } from 'pg';
 
 let cachedPasswordColumn: 'password_hash' | 'password' | null = null;
 
@@ -35,7 +36,23 @@ function normalizePhone(input: string) {
   return digits;
 }
 
+function isBcryptHash(value: string) {
+  return value.startsWith('$2a$') || value.startsWith('$2b$') || value.startsWith('$2y$');
+}
+
+function serverError(code: string, details?: string) {
+  return NextResponse.json(
+    {
+      error: `Internal server error (${code})`,
+      details: process.env.NODE_ENV === 'development' ? details : undefined
+    },
+    { status: 500 }
+  );
+}
+
 export async function POST(request: NextRequest) {
+  let client: PoolClient | null = null;
+
   try {
     const body = await request.json();
     const identifier: string | undefined = body.identifier ?? body.email;
@@ -49,11 +66,16 @@ export async function POST(request: NextRequest) {
     const normalizedPhone = isEmail ? null : normalizePhone(identifier);
 
     // Find user
-    const client = await pool.connect();
+    try {
+      client = await pool.connect();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return serverError('DB_CONNECT_FAILED', msg);
+    }
+
     const passwordColumn = await getPasswordColumn(client);
     if (!passwordColumn) {
-      client.release();
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      return serverError('PASSWORD_COLUMN_NOT_FOUND');
     }
 
     const result = isEmail
@@ -78,35 +100,66 @@ export async function POST(request: NextRequest) {
         );
 
     if (result.rows.length === 0) {
-      client.release();
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
     if (!isEmail && result.rows.length > 1) {
-      client.release();
       return NextResponse.json(
         { error: 'Namba ya simu inatumika kwenye akaunti zaidi ya moja.' },
         { status: 409 }
       );
     }
 
-    const user = result.rows[0];
-    client.release();
+    const user = result.rows[0] as {
+      id: number;
+      email: string;
+      password_hash: string | null;
+      full_name: string;
+      role: string;
+    };
 
-    // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password_hash);
+    // Verify password (tolerate legacy non-bcrypt values)
+    const stored = user.password_hash;
+    let isValidPassword = false;
+
+    if (typeof stored === 'string' && stored.length > 0) {
+      if (isBcryptHash(stored)) {
+        try {
+          isValidPassword = await bcrypt.compare(password, stored);
+        } catch {
+          isValidPassword = false;
+        }
+      } else {
+        // Legacy plaintext fallback (migrate to bcrypt on success)
+        isValidPassword = stored === password;
+        if (isValidPassword) {
+          try {
+            const newHash = await bcrypt.hash(password, 12);
+            await client.query(`UPDATE users SET ${passwordColumn} = $1 WHERE id = $2`, [newHash, user.id]);
+          } catch {
+            // ignore migration failure
+          }
+        }
+      }
+    }
+
     if (!isValidPassword) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
     // Create JWT token
+    const jwtSecret = process.env.JWT_SECRET;
+    if (process.env.NODE_ENV === 'production' && !jwtSecret) {
+      return serverError('MISSING_JWT_SECRET');
+    }
+
     const token = jwt.sign(
       { 
         userId: user.id, 
         email: user.email, 
         role: user.role 
       },
-      process.env.JWT_SECRET || 'fallback-secret',
+      jwtSecret || 'fallback-secret',
       { expiresIn: '7d' }
     );
 
@@ -131,12 +184,9 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Signin error:', error);
-    return NextResponse.json(
-      {
-        error: 'Internal server error',
-        details: process.env.NODE_ENV === 'development' && error instanceof Error ? error.message : undefined
-      },
-      { status: 500 }
-    );
+    const details = error instanceof Error ? error.message : String(error);
+    return serverError('UNHANDLED', details);
+  } finally {
+    client?.release();
   }
 }
