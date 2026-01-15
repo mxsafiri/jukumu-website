@@ -10,7 +10,7 @@ export default function LoginPage() {
   const { } = useLanguage();
   const router = useRouter();
   const [formData, setFormData] = useState({
-    email: '',
+    identifier: '',
     password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -36,7 +36,7 @@ export default function LoginPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: formData.email,
+          identifier: formData.identifier,
           password: formData.password,
         }),
       });
@@ -52,8 +52,27 @@ export default function LoginPage() {
           router.push('/member-dashboard');
         }
       } else {
-        await response.json();
-        setError('Barua pepe au nywila si sahihi. Hakikisha umesajili kwanza.');
+        let errorData: { error?: string } | null = null;
+        try {
+          errorData = await response.json();
+        } catch {
+          errorData = null;
+        }
+
+        if (response.status === 409) {
+          setError(
+            errorData?.error ||
+              'Namba ya simu inatumika kwenye akaunti zaidi ya moja. Tafadhali ingia kwa barua pepe au wasiliana nasi.'
+          );
+        } else if (response.status === 500) {
+          const details =
+            typeof (errorData as { details?: unknown } | null)?.details === 'string'
+              ? ` (${(errorData as { details?: string }).details})`
+              : '';
+          setError((errorData?.error || 'Hitilafu imetokea. Jaribu tena.') + details);
+        } else {
+          setError('Barua pepe/nambari ya simu au nywila si sahihi. Hakikisha umesajili kwanza.');
+        }
       }
     } catch (error: unknown) {
       console.error('Login error:', error);
@@ -79,7 +98,7 @@ export default function LoginPage() {
           <h2 className="text-3xl font-bold text-gray-900">Ingia kwenye akaunti yako</h2>
           <p className="mt-2 text-sm text-gray-600">
             Au{' '}
-            <Link href="/#join" className="font-medium text-orange-600 hover:text-orange-500">
+            <Link href="/register" className="font-medium text-orange-600 hover:text-orange-500">
               jisajili kama mwanachama mpya
             </Link>
           </p>
@@ -95,18 +114,18 @@ export default function LoginPage() {
             )}
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Barua pepe
+              <label htmlFor="identifier" className="block text-sm font-medium text-gray-700 mb-2">
+                Barua pepe au nambari ya simu
               </label>
               <input
-                id="email"
-                name="email"
-                type="email"
+                id="identifier"
+                name="identifier"
+                type="text"
                 required
-                value={formData.email}
+                value={formData.identifier}
                 onChange={handleChange}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors duration-200"
-                placeholder="email@example.com"
+                placeholder="07xx xxx xxx au email@example.com"
               />
             </div>
 

@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { UserPlusIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 
-export default function RegistrationSection() {
+export default function RegistrationSection({ title }: { title?: string }) {
   const { t } = useLanguage();
   const [formData, setFormData] = useState({
     fullName: '',
@@ -53,22 +53,28 @@ export default function RegistrationSection() {
         },
         body: JSON.stringify({
           fullName: formData.fullName,
-          email: formData.email,
+          email: formData.email.trim() ? formData.email.trim() : null,
           phone: formData.phone,
           location: formData.location,
           businessType: formData.businessType,
           idType: formData.idType,
           idNumber: formData.idNumber,
           gender: formData.gender,
-          age: parseInt(formData.age),
+          age: formData.age,
           status: 'pending'
         }),
       });
 
       if (!memberResponse.ok) {
         const errorData = await memberResponse.json();
-        throw new Error(errorData.error || 'Failed to save member data');
+        const details =
+          typeof errorData?.details === 'string' && errorData.details
+            ? ` (${errorData.details})`
+            : '';
+        throw new Error((errorData.error || 'Failed to save member data') + details);
       }
+
+      const memberData = await memberResponse.json();
 
       console.log('Member data saved successfully');
 
@@ -80,7 +86,9 @@ export default function RegistrationSection() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: formData.email,
+          email: formData.email.trim() ? formData.email.trim() : null,
+          phone: formData.phone,
+          memberId: memberData?.id,
           password: formData.password,
           fullName: formData.fullName,
         }),
@@ -164,7 +172,7 @@ export default function RegistrationSection() {
                 <span className="text-orange-600 text-sm font-semibold">Jiunge Nasi</span>
               </div>
               <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
-                {t('registration.title')}
+                {title ?? t('registration.title')}
               </h2>
               <p className="text-xl text-gray-600 leading-relaxed mb-8">
                 Jiunge na jamii ya wajasiriamali na uanze safari yako ya mafanikio kupitia ushirikiano na mafunzo ya kisasa.
@@ -268,13 +276,12 @@ export default function RegistrationSection() {
               {/* Email */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                  Barua Pepe *
+                  Barua Pepe (si lazima)
                 </label>
                 <input
                   type="email"
                   id="email"
                   name="email"
-                  required
                   value={formData.email}
                   onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors duration-200"
