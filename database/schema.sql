@@ -69,6 +69,16 @@ CREATE TABLE group_proposals (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE group_proposal_votes (
+    id SERIAL PRIMARY KEY,
+    proposal_id INTEGER NOT NULL REFERENCES group_proposals(id) ON DELETE CASCADE,
+    member_id INTEGER NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+    vote VARCHAR(20) NOT NULL CHECK (vote IN ('yes', 'no', 'abstain')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(proposal_id, member_id)
+);
+
 -- Investments table
 CREATE TABLE investments (
     id SERIAL PRIMARY KEY,
@@ -221,6 +231,8 @@ CREATE INDEX idx_group_members_group_id ON group_members(group_id);
 CREATE INDEX idx_group_members_member_id ON group_members(member_id);
 CREATE INDEX idx_group_proposals_group_id ON group_proposals(group_id);
 CREATE INDEX idx_group_proposals_created_at ON group_proposals(created_at DESC);
+CREATE INDEX idx_group_proposal_votes_proposal_id ON group_proposal_votes(proposal_id);
+CREATE INDEX idx_group_proposal_votes_member_id ON group_proposal_votes(member_id);
 CREATE INDEX idx_investments_group_id ON investments(group_id);
 CREATE INDEX idx_investments_status ON investments(status);
 CREATE INDEX idx_monthly_contributions_member_id ON monthly_contributions(member_id);
