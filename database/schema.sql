@@ -58,6 +58,17 @@ CREATE TABLE group_members (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE group_proposals (
+    id SERIAL PRIMARY KEY,
+    group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+    created_by_member_id INTEGER NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    status VARCHAR(20) NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'closed')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Investments table
 CREATE TABLE investments (
     id SERIAL PRIMARY KEY,
@@ -208,6 +219,8 @@ CREATE INDEX idx_members_status ON members(status);
 CREATE INDEX idx_groups_status ON groups(status);
 CREATE INDEX idx_group_members_group_id ON group_members(group_id);
 CREATE INDEX idx_group_members_member_id ON group_members(member_id);
+CREATE INDEX idx_group_proposals_group_id ON group_proposals(group_id);
+CREATE INDEX idx_group_proposals_created_at ON group_proposals(created_at DESC);
 CREATE INDEX idx_investments_group_id ON investments(group_id);
 CREATE INDEX idx_investments_status ON investments(status);
 CREATE INDEX idx_monthly_contributions_member_id ON monthly_contributions(member_id);

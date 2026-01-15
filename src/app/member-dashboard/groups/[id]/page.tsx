@@ -40,6 +40,18 @@ type LeadershipRow = {
   status?: string | null;
 };
 
+type ProposalRow = {
+  id: number;
+  group_id: number;
+  title: string;
+  description?: string | null;
+  status: 'open' | 'closed' | string;
+  created_at?: string;
+  updated_at?: string;
+  created_by_name?: string;
+  created_by_member_id?: number;
+};
+
 function roleLabel(role?: string) {
   switch (role) {
     case 'leader':
@@ -66,8 +78,14 @@ export default function MemberGroupDetailsPage() {
   const [membership, setMembership] = useState<Membership | null>(null);
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [leadership, setLeadership] = useState<LeadershipRow[]>([]);
+  const [proposals, setProposals] = useState<ProposalRow[]>([]);
   const [activeTab, setActiveTab] = useState<'overview' | 'members' | 'leadership' | 'decisions'>('overview');
   const [error, setError] = useState<string>('');
+
+  const [showCreateProposal, setShowCreateProposal] = useState(false);
+  const [proposalTitle, setProposalTitle] = useState('');
+  const [proposalDescription, setProposalDescription] = useState('');
+  const [proposalSubmitting, setProposalSubmitting] = useState(false);
 
   const canCreateProposal = useMemo(() => {
     const r = membership?.role;
@@ -87,15 +105,16 @@ export default function MemberGroupDetailsPage() {
       setError('');
 
       try {
-        const [groupRes, membersRes, leadershipRes] = await Promise.all([
+        const [groupRes, membersRes, leadershipRes, proposalsRes] = await Promise.all([
           fetch(`/api/member/groups/${groupId}`),
           fetch(`/api/member/groups/${groupId}/members`),
-          fetch(`/api/member/groups/${groupId}/leadership`)
+          fetch(`/api/member/groups/${groupId}/leadership`),
+          fetch(`/api/member/groups/${groupId}/proposals`)
         ]);
 
         if (cancelled) return;
 
-        if ([groupRes.status, membersRes.status, leadershipRes.status].includes(401)) {
+        if ([groupRes.status, membersRes.status, leadershipRes.status, proposalsRes.status].includes(401)) {
           router.push('/login');
           return;
         }
@@ -108,6 +127,7 @@ export default function MemberGroupDetailsPage() {
         const groupJson = await groupRes.json().catch(() => null);
         const membersJson = await membersRes.json().catch(() => null);
         const leadershipJson = await leadershipRes.json().catch(() => null);
+        const proposalsJson = await proposalsRes.json().catch(() => null);
 
         if (!groupRes.ok) {
           setError(groupJson?.error || 'Imeshindikana kupakua taarifa za kundi.');
@@ -119,6 +139,7 @@ export default function MemberGroupDetailsPage() {
 
         setMembers(Array.isArray(membersJson?.members) ? membersJson.members : []);
         setLeadership(Array.isArray(leadershipJson?.leadership) ? leadershipJson.leadership : []);
+        setProposals(Array.isArray(proposalsJson?.proposals) ? proposalsJson.proposals : []);
       } catch (e) {
         if (cancelled) return;
         setError(e instanceof Error ? e.message : 'Imeshindikana kupakua taarifa.');
@@ -160,7 +181,10 @@ export default function MemberGroupDetailsPage() {
 
           <div className="flex gap-2">
             <button
-              onClick={() => alert('Coming soon: Create proposal')}
+              onClick={() => {
+                setActiveTab('decisions');
+                setShowCreateProposal(true);
+              }}
               disabled={!canCreateProposal}
               className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
                 canCreateProposal
@@ -291,12 +315,143 @@ export default function MemberGroupDetailsPage() {
 
             {activeTab === 'decisions' && (
               <div className="space-y-3">
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <p className="text-sm font-medium text-gray-900">Proposals & Voting</p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Coming next: create proposals, open voting, vote, and view results. UI will be role-based.
-                  </p>
+                {showCreateProposal && (
+                  <div className="border border-gray-200 rounded-lg p-4 bg-white">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">Create Proposal</p>
+                        <p className="text-sm text-gray-600 mt-1">Only leadership roles can create proposals.</p>
+                      </div>
+                      <button
+                        onClick={() => setShowCreateProposal(false)}
+                        className="text-sm text-gray-600 hover:text-gray-800"
+                      >
+                        Close
+                      </button>
+                    </div>
+
+                    {!canCreateProposal && (
+                      <div className="mt-3 bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg text-sm">
+                        You do not have permission to create proposals.
+                      </div>
+                    )}
+
+                    <form
+                      className="mt-4 space-y-3"
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        if (!groupId) return;
+                        if (!canCreateProposal) return;
+
+                        const t = proposalTitle.trim();
+                        const d = proposalDescription.trim();
+                        if (!t) {
+                          setError('Proposal title is required.');
+                          return;
+                        }
+
+                        setProposalSubmitting(true);
+                        setError('');
+                        try {
+                          const res = await fetch(`/api/member/groups/${groupId}/proposals`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ title: t, description: d })
+                          });
+
+                          if (res.status === 401) {
+                            router.push('/login');
+                            return;
+                          }
+
+                          const json = await res.json().catch(() => null);
+                          if (!res.ok) {
+                            setError(json?.error || 'Imeshindikana kuunda pendekezo.');
+                            return;
+                          }
+
+                          const created = json?.proposal as ProposalRow | undefined;
+                          if (created) {
+                            setProposals((prev) => [created, ...prev]);
+                          }
+                          setProposalTitle('');
+                          setProposalDescription('');
+                          setShowCreateProposal(false);
+                        } catch (err) {
+                          setError(err instanceof Error ? err.message : 'Imeshindikana kuunda pendekezo.');
+                        } finally {
+                          setProposalSubmitting(false);
+                        }
+                      }}
+                    >
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Title</label>
+                        <input
+                          value={proposalTitle}
+                          onChange={(e) => setProposalTitle(e.target.value)}
+                          className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          placeholder="e.g. Increase monthly contribution"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Description</label>
+                        <textarea
+                          value={proposalDescription}
+                          onChange={(e) => setProposalDescription(e.target.value)}
+                          className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          placeholder="Explain the proposal..."
+                          rows={4}
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="submit"
+                          disabled={proposalSubmitting || !canCreateProposal}
+                          className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                            proposalSubmitting || !canCreateProposal
+                              ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                              : 'bg-orange-600 text-white border-orange-600 hover:bg-orange-700'
+                          }`}
+                        >
+                          {proposalSubmitting ? 'Creating...' : 'Create'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowCreateProposal(false)}
+                          className="px-4 py-2 rounded-lg text-sm font-medium border bg-white text-gray-700 hover:bg-gray-50"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+
+                <div className="border border-gray-200 rounded-lg p-4 bg-white">
+                  <p className="text-sm font-medium text-gray-900">Proposals</p>
+                  <p className="text-sm text-gray-600 mt-1">Latest proposals for this group.</p>
                 </div>
+
+                {proposals.map((p) => (
+                  <div key={p.id} className="border border-gray-200 rounded-lg p-4 bg-white">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">{p.title}</p>
+                        {p.description && <p className="text-sm text-gray-700 mt-1">{p.description}</p>}
+                        <p className="text-xs text-gray-500 mt-2">Created by: {p.created_by_name || '—'}</p>
+                      </div>
+                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-50 text-gray-800 border border-gray-200">
+                        {String(p.status)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+
+                {proposals.length === 0 && (
+                  <div className="border border-gray-200 rounded-lg p-4 bg-white">
+                    <p className="text-sm text-gray-600">No proposals yet.</p>
+                  </div>
+                )}
               </div>
             )}
           </div>
