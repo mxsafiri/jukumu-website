@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import type { PoolClient, QueryResult } from 'pg';
 
 let cachedPasswordColumn: 'password_hash' | 'password' | null = null;
+let cachedMembersHasEmail: boolean | null = null;
 
 async function getPasswordColumn(client: { query: (sql: string, params?: unknown[]) => Promise<{ rows: { column_name: string }[] }> }) {
   if (cachedPasswordColumn) return cachedPasswordColumn;
@@ -22,6 +23,23 @@ async function getPasswordColumn(client: { query: (sql: string, params?: unknown
   const cols = new Set(res.rows.map((r) => r.column_name));
   cachedPasswordColumn = cols.has('password_hash') ? 'password_hash' : cols.has('password') ? 'password' : null;
   return cachedPasswordColumn;
+}
+
+async function getMembersHasEmail(client: { query: (sql: string, params?: unknown[]) => Promise<{ rows: { column_name: string }[] }> }) {
+  if (cachedMembersHasEmail !== null) return cachedMembersHasEmail;
+
+  const res = await client.query(
+    `
+    SELECT column_name
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'members'
+      AND column_name = 'email'
+    `
+  );
+
+  cachedMembersHasEmail = res.rows.length > 0;
+  return cachedMembersHasEmail;
 }
 
 function normalizePhone(input: string) {
@@ -100,6 +118,15 @@ export async function POST(request: NextRequest) {
       return serverError('PASSWORD_COLUMN_NOT_FOUND', requestId);
     }
 
+    let membersHasEmail = false;
+    try {
+      membersHasEmail = await getMembersHasEmail(client);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error('Signin error (MEMBERS_SCHEMA_LOOKUP_FAILED):', requestId, e);
+      return serverError('MEMBERS_SCHEMA_LOOKUP_FAILED', requestId, msg);
+    }
+
     let result: QueryResult;
     try {
       result = isEmail
@@ -116,16 +143,36 @@ export async function POST(request: NextRequest) {
             `
             SELECT u.id, u.email, u.${passwordColumn} as password_hash, u.full_name, u.role
             FROM users u
-            LEFT JOIN members m ON (m.user_id = u.id OR lower(m.email) = lower(u.email))
+            LEFT JOIN members m ON (m.user_id = u.id${membersHasEmail ? ' OR lower(m.email) = lower(u.email)' : ''})
             WHERE $1 IS NOT NULL
             AND regexp_replace(coalesce(m.phone, ''), '\\D', '', 'g') = $1
             `,
             [normalizedPhone]
           );
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      console.error('Signin error (USER_LOOKUP_FAILED):', requestId, e);
-      return serverError('USER_LOOKUP_FAILED', requestId, msg);
+      if (!isEmail && normalizedPhone) {
+        // Fallback: for accounts created without email, we create a synthetic email in users.
+        const phoneEmail = `${normalizedPhone}@phone.jukumu`;
+        try {
+          result = await client.query(
+            `
+            SELECT u.id, u.email, u.${passwordColumn} as password_hash, u.full_name, u.role
+            FROM users u
+            WHERE lower(u.email) = lower($1)
+            LIMIT 1
+            `,
+            [phoneEmail]
+          );
+        } catch (fallbackErr) {
+          const msg = fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr);
+          console.error('Signin error (USER_LOOKUP_FAILED):', requestId, fallbackErr);
+          return serverError('USER_LOOKUP_FAILED', requestId, msg);
+        }
+      } else {
+        const msg = e instanceof Error ? e.message : String(e);
+        console.error('Signin error (USER_LOOKUP_FAILED):', requestId, e);
+        return serverError('USER_LOOKUP_FAILED', requestId, msg);
+      }
     }
 
     if (result.rows.length === 0) {

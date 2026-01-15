@@ -69,7 +69,11 @@ export default function LoginPage() {
             typeof (errorData as { details?: unknown } | null)?.details === 'string'
               ? ` (${(errorData as { details?: string }).details})`
               : '';
-          setError((errorData?.error || 'Hitilafu imetokea. Jaribu tena.') + details);
+          const requestId =
+            typeof (errorData as { requestId?: unknown } | null)?.requestId === 'string'
+              ? ` [${(errorData as { requestId?: string }).requestId}]`
+              : '';
+          setError((errorData?.error || 'Hitilafu imetokea. Jaribu tena.') + details + requestId);
         } else {
           setError('Barua pepe/nambari ya simu au nywila si sahihi. Hakikisha umesajili kwanza.');
         }
