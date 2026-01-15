@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 
 type Membership = {
   member_id: number;
@@ -56,9 +56,10 @@ function roleLabel(role?: string) {
   }
 }
 
-export default function MemberGroupDetailsPage({ params }: { params: { id: string } }) {
+export default function MemberGroupDetailsPage() {
   const router = useRouter();
-  const groupId = params.id;
+  const routeParams = useParams<{ id?: string | string[] }>();
+  const groupId = Array.isArray(routeParams?.id) ? routeParams?.id[0] : routeParams?.id;
 
   const [loading, setLoading] = useState(true);
   const [group, setGroup] = useState<Group | null>(null);
@@ -75,6 +76,11 @@ export default function MemberGroupDetailsPage({ params }: { params: { id: strin
 
   useEffect(() => {
     let cancelled = false;
+
+    if (!groupId) {
+      router.push('/member-dashboard?section=group');
+      return;
+    }
 
     async function load() {
       setLoading(true);
