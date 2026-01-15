@@ -96,6 +96,7 @@ export default function RegistrationSection({ title }: { title?: string }) {
 
       if (authResponse.ok) {
         const authData = await authResponse.json();
+        localStorage.setItem('user', JSON.stringify(authData.user));
       
         // Role-based redirect
         if (authData.user.role === 'admin') {

@@ -28,29 +28,20 @@ export default function AdminDashboard() {
   // Check authentication and load admin data
   useEffect(() => {
     const userData = localStorage.getItem('user');
-    if (userData) {
-      const parsedUser = JSON.parse(userData);
-      setUser(parsedUser);
-      
-      // Redirect members to member dashboard
-      if (parsedUser.role === 'member') {
-        router.push('/member-dashboard');
-        return;
-      }
-      
-      // Load admin data
-      loadAdminData();
-    } else {
-      // For testing purposes, create a mock admin user
-      const mockAdmin = {
-        id: 1,
-        fullName: 'Admin User',
-        email: 'admin@jukumu.com',
-        role: 'admin'
-      };
-      setUser(mockAdmin);
-      loadAdminData();
+    if (!userData) {
+      router.push('/login');
+      return;
     }
+
+    const parsedUser = JSON.parse(userData);
+    setUser(parsedUser);
+
+    if (parsedUser.role !== 'admin') {
+      router.push('/member-dashboard');
+      return;
+    }
+
+    loadAdminData();
   }, [router]);
 
   const loadAdminData = async () => {
