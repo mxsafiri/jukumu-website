@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 
 let cachedGroupMembersHasUpdatedAt: boolean | null = null;
+let cachedRoleConstraintUpgraded: boolean | null = null;
 
 async function getGroupMembersHasUpdatedAt(client: { query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }> }) {
   if (cachedGroupMembersHasUpdatedAt !== null) return cachedGroupMembersHasUpdatedAt;
@@ -19,6 +20,19 @@ async function getGroupMembersHasUpdatedAt(client: { query: (sql: string, params
 
   cachedGroupMembersHasUpdatedAt = res.rows.length > 0;
   return cachedGroupMembersHasUpdatedAt;
+}
+
+async function ensureGroupMembersRoleConstraint(client: { query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }> }) {
+  if (cachedRoleConstraintUpgraded) return;
+
+  await client.query(`ALTER TABLE group_members DROP CONSTRAINT IF EXISTS group_members_role_check;`);
+  await client.query(`
+    ALTER TABLE group_members
+    ADD CONSTRAINT group_members_role_check
+    CHECK (role IN ('leader', 'member', 'mwenyekiti', 'katibu', 'mwekahazina'))
+  `);
+
+  cachedRoleConstraintUpgraded = true;
 }
 
 // Get group leadership roles
@@ -129,7 +143,29 @@ export async function PUT(
           RETURNING *
           `;
 
-      const result = await client.query(updateSql, [role, id, memberId]);
+      let result;
+      try {
+        result = await client.query(updateSql, [role, id, memberId]);
+      } catch (e) {
+        if (e instanceof Error && e.message.includes('check constraint')) {
+          try {
+            await ensureGroupMembersRoleConstraint(client);
+            result = await client.query(updateSql, [role, id, memberId]);
+          } catch (upgradeErr) {
+            client.release();
+            const msg = upgradeErr instanceof Error ? upgradeErr.message : 'Unknown error';
+            return NextResponse.json(
+              {
+                error: 'Nafasi hii haijaidhinishwa bado. Tafadhali sasisha mfumo wa data (schema) kisha jaribu tena.',
+                details: msg
+              },
+              { status: 400 }
+            );
+          }
+        } else {
+          throw e;
+        }
+      }
       
       client.release();
       
