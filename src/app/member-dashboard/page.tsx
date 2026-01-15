@@ -496,6 +496,8 @@ function ProfileSection({ memberProfile, user, loadMemberData }: { memberProfile
 }
 
 function MyGroupSection({ memberProfile }: { memberProfile: any }) {
+  const router = useRouter();
+  const [myGroups, setMyGroups] = useState<any[]>([]);
   const [availableGroups, setAvailableGroups] = useState<any[]>([]);
   const [joinRequests, setJoinRequests] = useState<any[]>([]);
   const [showAvailableGroups, setShowAvailableGroups] = useState(false);
@@ -509,32 +511,49 @@ function MyGroupSection({ memberProfile }: { memberProfile: any }) {
     if (userData) {
       const parsedUser = JSON.parse(userData);
       setUser(parsedUser);
-      
-      if (!memberProfile?.group_name) {
-        loadAvailableGroups(parsedUser.id);
-        loadJoinRequests(parsedUser.id);
-      }
+
+      loadMyGroups();
+      loadAvailableGroups();
+      loadJoinRequests();
     }
   }, [memberProfile]);
 
-  const loadAvailableGroups = async (memberId: number) => {
+  const loadMyGroups = async () => {
     try {
-      const response = await fetch(`/api/groups/available?memberId=${memberId}`);
+      const response = await fetch('/api/member/groups');
+      if (response.ok) {
+        const data = await response.json();
+        setMyGroups(data.groups || []);
+      } else if (response.status === 401) {
+        router.push('/login');
+      }
+    } catch (error) {
+      console.error('Error loading my groups:', error);
+    }
+  };
+
+  const loadAvailableGroups = async () => {
+    try {
+      const response = await fetch('/api/member/available-groups');
       if (response.ok) {
         const data = await response.json();
         setAvailableGroups(data.groups || []);
+      } else if (response.status === 401) {
+        router.push('/login');
       }
     } catch (error) {
       console.error('Error loading available groups:', error);
     }
   };
 
-  const loadJoinRequests = async (memberId: number) => {
+  const loadJoinRequests = async () => {
     try {
-      const response = await fetch(`/api/groups/join-request?memberId=${memberId}`);
+      const response = await fetch('/api/member/join-requests');
       if (response.ok) {
         const data = await response.json();
         setJoinRequests(data.requests || []);
+      } else if (response.status === 401) {
+        router.push('/login');
       }
     } catch (error) {
       console.error('Error loading join requests:', error);
@@ -546,12 +565,10 @@ function MyGroupSection({ memberProfile }: { memberProfile: any }) {
     
     setLoading(true);
     try {
-      // Use the new API that properly maps user ID to member ID
-      const response = await fetch('/api/groups/join-request-by-user', {
+      const response = await fetch('/api/member/join-requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: user.id,  // Send user ID, not member ID
           groupId,
           message: joinMessage
         })
@@ -563,10 +580,7 @@ function MyGroupSection({ memberProfile }: { memberProfile: any }) {
         alert(data.message);
         setSelectedGroup(null);
         setJoinMessage('');
-        // Use the member ID from the API response
-        if (data.memberInfo?.memberId) {
-          loadJoinRequests(data.memberInfo.memberId);
-        }
+        await Promise.all([loadJoinRequests(), loadAvailableGroups()]);
       } else {
         alert(data.error || 'An error occurred');
       }
@@ -598,21 +612,43 @@ function MyGroupSection({ memberProfile }: { memberProfile: any }) {
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">My Group</h2>
+      <h2 className="text-2xl font-bold text-gray-900 mb-6">My Groups</h2>
       
-      {memberProfile?.group_name ? (
+      {myGroups.length > 0 ? (
         <div className="space-y-4">
-          <div className="border border-gray-200 rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-gray-900">{memberProfile.group_name}</h3>
-            <p className="text-sm text-gray-600 mt-1">Role: {memberProfile.group_role || 'Member'}</p>
-            <div className="mt-4 grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm font-medium text-gray-700">Status</p>
-                <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                  Active
-                </span>
-              </div>
-            </div>
+          <div className="grid gap-4">
+            {myGroups.map((g) => (
+              <button
+                key={g.id}
+                onClick={() => router.push(`/member-dashboard/groups/${g.id}`)}
+                className="border border-gray-200 rounded-lg p-4 text-left hover:border-orange-300 hover:bg-orange-50/40 transition-colors"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">{g.name}</h3>
+                    <p className="text-sm text-gray-600 mt-1">Role: {g.member_role || 'member'}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Status: {g.membership_status || g.status || 'active'}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-orange-600">
+                      TSH {parseInt(g.monthly_contribution || 0).toLocaleString()}/month
+                    </p>
+                    <p className="text-xs text-gray-500">Open</p>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+
+          <div className="pt-2">
+            <button
+              onClick={() => setShowAvailableGroups(!showAvailableGroups)}
+              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+            >
+              {showAvailableGroups ? 'Hide Groups' : 'Join Another Group'}
+            </button>
           </div>
         </div>
       ) : (
