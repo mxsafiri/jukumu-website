@@ -4,7 +4,6 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { ChevronDownIcon, ArrowTrendingUpIcon, CurrencyDollarIcon, ArrowRightIcon, PlayIcon } from '@heroicons/react/24/outline';
 
 export default function HeroSection() {
   const { t } = useLanguage();
@@ -51,12 +50,10 @@ export default function HeroSection() {
 
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-4">
-                <a href="#join" className="inline-flex items-center justify-center px-8 py-4 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
-                  <ArrowRightIcon className="h-5 w-5 mr-2" />
+                <Link href="/register" className="inline-flex items-center justify-center px-8 py-4 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
                   Jiunge
-                </a>
+                </Link>
                 <Link href="/learn" className="inline-flex items-center justify-center px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-lg border border-white/20 hover:bg-white/20 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
-                  <PlayIcon className="h-5 w-5 mr-2" />
                   {t('hero.learn_more')}
                 </Link>
               </div>
@@ -65,52 +62,29 @@ export default function HeroSection() {
 
             {/* Right Visual - Image Grid */}
             <div className="lg:col-span-5 relative">
-              <div className="grid grid-cols-2 gap-4 transform rotate-3">
+              <div className="bg-white/10 backdrop-blur-sm border border-white/15 rounded-2xl p-8 shadow-2xl">
                 <div className="space-y-4">
-                  <div className="relative h-48 rounded-2xl overflow-hidden shadow-2xl">
-                    <Image
-                      src="/PXL_20250531_095043801.PORTRAIT.jpg"
-                      alt="JUKUMU Member"
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="relative h-32 rounded-2xl overflow-hidden shadow-2xl">
-                    <Image
-                      src="/PXL_20250618_082400942.PORTRAIT.jpg"
-                      alt="JUKUMU Training"
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-4 mt-8">
-                  <div className="relative h-32 rounded-2xl overflow-hidden shadow-2xl">
-                    <Image
-                      src="/PXL_20250707_142150410.PORTRAIT.jpg"
-                      alt="JUKUMU Business"
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="relative h-48 rounded-2xl overflow-hidden shadow-2xl">
-                    <Image
-                      src="/PXL_20250716_145532532.PORTRAIT.jpg"
-                      alt="JUKUMU Community"
-                      fill
-                      className="object-cover"
-                    />
+                  <h3 className="text-white text-2xl font-semibold">Kuanza ni rahisi</h3>
+                  <p className="text-gray-200 leading-relaxed">
+                    Jisajili, ungana na jamii ya wajasiriamali, na anza kupata mafunzo na msaada wa ukuaji.
+                  </p>
+                  <div className="grid grid-cols-1 gap-3 pt-2">
+                    <div className="rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-gray-200">
+                      Mafunzo ya biashara
+                    </div>
+                    <div className="rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-gray-200">
+                      Mtandao wa vikundi
+                    </div>
+                    <div className="rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-gray-200">
+                      Ufuatiliaji wa maendeleo
+                    </div>
                   </div>
                 </div>
               </div>
               
               {/* Floating elements */}
-              <div className="absolute -top-4 -left-4 w-16 h-16 bg-orange-500/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-orange-300/30">
-                <ArrowTrendingUpIcon className="h-6 w-6 text-orange-600" />
-              </div>
-              <div className="absolute -bottom-4 -right-4 w-16 h-16 bg-green-500/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-green-300/30">
-                <CurrencyDollarIcon className="h-6 w-6 text-green-600" />
-              </div>
+              <div className="absolute -top-4 -left-4 w-16 h-16 bg-white/10 backdrop-blur-sm rounded-full border border-white/15"></div>
+              <div className="absolute -bottom-4 -right-4 w-16 h-16 bg-white/10 backdrop-blur-sm rounded-full border border-white/15"></div>
             </div>
           </div>
         </div>

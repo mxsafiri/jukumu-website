@@ -3,129 +3,48 @@
 import React from 'react';
 import Image from 'next/image';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { AcademicCapIcon, CurrencyDollarIcon, ArrowPathIcon, UsersIcon } from '@heroicons/react/24/outline';
-import { EyeIcon, HeartIcon, StarIcon } from '@heroicons/react/24/outline';
+import { motion } from 'framer-motion';
 
 export default function AboutSection() {
   const { t } = useLanguage();
 
   const features = [
     {
-      icon: AcademicCapIcon,
       title: t('how_it_works.step1.title'),
       description: t('how_it_works.step1.text'),
-      color: 'from-blue-500 to-blue-600',
       image: '/PXL_20250531_114540969.PORTRAIT.jpg',
     },
     {
-      icon: CurrencyDollarIcon,
       title: t('how_it_works.step2.title'),
       description: t('how_it_works.step2.text'),
-      color: 'from-green-500 to-green-600',
       image: '/PXL_20250618_114941185.MP.jpg',
     },
     {
-      icon: ArrowPathIcon,
       title: t('how_it_works.step3.title'),
       description: t('how_it_works.step3.text'),
-      color: 'from-orange-500 to-orange-600',
       image: '/PXL_20250707_145652539.PORTRAIT.jpg',
     },
     {
-      icon: UsersIcon,
       title: t('how_it_works.step4.title'),
       description: t('how_it_works.step4.text'),
-      color: 'from-red-500 to-red-600',
       image: '/PXL_20250716_145812315.PORTRAIT.jpg',
     },
   ];
 
   return (
-    <section id="about" className="relative py-24 bg-gradient-to-b from-white to-gray-50 overflow-hidden">
+    <section id="about" className="relative py-24 bg-white overflow-hidden">
       {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-5">
+      <div className="absolute inset-0 opacity-0">
         <div className="absolute inset-0" style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f97316' fill-opacity='0.4'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
         }}></div>
       </div>
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* About Header */}
-        <div className="text-center mb-20">
-          <div className="inline-flex items-center px-4 py-2 bg-orange-100 rounded-full mb-6">
-            <span className="text-orange-600 text-sm font-semibold">Kuhusu Sisi</span>
-          </div>
-          <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
-            {t('about.title')}
-          </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            {t('hero.subtitle')}
-          </p>
-        </div>
-
-        {/* Vision, Mission, Values with Images */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-24">
-          <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-orange-500 to-red-500 p-8 text-white transform hover:scale-105 transition-all duration-500">
-            <div className="absolute inset-0 opacity-20">
-              <Image
-                src="/PXL_20250805_145020244.PORTRAIT.jpg"
-                alt="Vision"
-                fill
-                className="object-cover"
-              />
-            </div>
-            <div className="relative z-10">
-              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-6">
-                <EyeIcon className="h-8 w-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold mb-4">{t('about.vision.title')}</h3>
-              <p className="text-orange-100 leading-relaxed">{t('about.vision.text')}</p>
-            </div>
-          </div>
-
-          <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-green-500 to-emerald-500 p-8 text-white transform hover:scale-105 transition-all duration-500">
-            <div className="absolute inset-0 opacity-20">
-              <Image
-                src="/PXL_20250621_071351878.PORTRAIT.jpg"
-                alt="Mission"
-                fill
-                className="object-cover"
-              />
-            </div>
-            <div className="relative z-10">
-              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-6">
-                <HeartIcon className="h-8 w-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold mb-4">{t('about.mission.title')}</h3>
-              <p className="text-green-100 leading-relaxed">{t('about.mission.text')}</p>
-            </div>
-          </div>
-
-          <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-500 to-indigo-500 p-8 text-white transform hover:scale-105 transition-all duration-500">
-            <div className="absolute inset-0 opacity-20">
-              <Image
-                src="/PXL_20250729_122409694.PORTRAIT.jpg"
-                alt="Values"
-                fill
-                className="object-cover"
-              />
-            </div>
-            <div className="relative z-10">
-              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-6">
-                <StarIcon className="h-8 w-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold mb-4">{t('about.values.title')}</h3>
-              <p className="text-blue-100 leading-relaxed">{t('about.values.text')}</p>
-            </div>
-          </div>
-        </div>
-
         {/* How It Works - Redesigned */}
-        <div className="space-y-16">
+        <div className="space-y-10">
           <div className="text-center">
-            <div className="inline-flex items-center px-4 py-2 bg-blue-100 rounded-full mb-6">
-              <span className="text-blue-600 text-sm font-semibold">Mchakato Wetu</span>
-            </div>
+            <div className="text-sm font-semibold text-gray-500 tracking-wide uppercase mb-6">Mchakato Wetu</div>
             <h3 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
               {t('how_it_works.title')}
             </h3>
@@ -134,42 +53,43 @@ export default function AboutSection() {
             </p>
           </div>
 
-          <div className="space-y-16">
-            {features.map((feature, index) => (
-              <div key={index} className={`flex flex-col ${index % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'} items-center gap-12`}>
-                {/* Image Side */}
-                <div className="lg:w-1/2 relative">
-                  <div className="relative h-96 rounded-3xl overflow-hidden shadow-2xl">
-                    <Image
-                      src={feature.image}
-                      alt={feature.title}
-                      fill
-                      className="object-cover transform hover:scale-105 transition-transform duration-700"
-                    />
-                  </div>
-                </div>
-
-                {/* Content Side */}
-                <div className="lg:w-1/2 space-y-6">
-                  <div className="flex items-center space-x-4">
-                    <div className={`w-16 h-16 bg-gradient-to-r ${feature.color} rounded-2xl flex items-center justify-center shadow-lg`}>
-                      <feature.icon className="h-8 w-8 text-white" />
+          <div>
+            <div className="-mx-4 px-4 overflow-x-auto pb-4">
+              <div className="flex gap-6 snap-x snap-mandatory scroll-px-4">
+                {features.map((feature, index) => (
+                  <motion.div
+                    key={index}
+                    className="snap-center shrink-0 w-[85%] sm:w-[70%] lg:w-[55%]"
+                    initial={{ opacity: 0, y: 12 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, ease: 'easeOut' }}
+                    viewport={{ once: true, amount: 0.4 }}
+                  >
+                    <div className="rounded-3xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                      <div className="relative h-56 sm:h-64">
+                        <Image
+                          src={feature.image}
+                          alt={feature.title}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <div className="p-8">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-10 h-10 rounded-full border border-orange-200 text-orange-700 bg-orange-50 flex items-center justify-center font-semibold">
+                            {index + 1}
+                          </div>
+                          <div className="h-px flex-1 bg-gray-200"></div>
+                        </div>
+                        <h4 className="text-2xl font-semibold text-gray-900 mb-3">{feature.title}</h4>
+                        <p className="text-gray-600 leading-relaxed">{feature.description}</p>
+                      </div>
                     </div>
-                    <div className="w-12 h-1 bg-gradient-to-r from-orange-400 to-red-400 rounded-full"></div>
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-3xl font-bold text-gray-900 mb-4">{feature.title}</h3>
-                    <p className="text-lg text-gray-600 leading-relaxed">{feature.description}</p>
-                  </div>
-                  
-                  <div className="flex items-center text-sm text-gray-500">
-                    <ArrowPathIcon className="h-4 w-4 mr-2" />
-                    <span>Mchakato unaoendelea</span>
-                  </div>
-                </div>
+                  </motion.div>
+                ))}
               </div>
-            ))}
+            </div>
+            <div className="text-center text-sm text-gray-500">Teleza kushoto/kulia kuona hatua zote</div>
           </div>
         </div>
       </div>

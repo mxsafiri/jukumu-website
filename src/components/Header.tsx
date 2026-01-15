@@ -3,28 +3,26 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Bars3Icon, XMarkIcon, GlobeAltIcon, HomeIcon, InformationCircleIcon, ChartBarIcon, UserPlusIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 
 export default function Header() {
   const { language, toggleLanguage, t } = useLanguage();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navigation = [
-    { name: t('nav.home'), href: '/#home', icon: HomeIcon },
-    { name: t('nav.about'), href: '/#about', icon: InformationCircleIcon },
-    { name: t('nav.how_it_works'), href: '/#how-it-works', icon: ChartBarIcon },
-    { name: t('nav.impact'), href: '/#impact', icon: ChartBarIcon },
-    { name: t('nav.join'), href: '/#join', icon: UserPlusIcon },
-    { name: t('nav.investor'), href: '/investor', icon: CurrencyDollarIcon },
+    { name: t('nav.home'), href: '/#home' },
+    { name: t('nav.about'), href: '/#about' },
+    { name: t('nav.join'), href: '/register' },
+    { name: t('nav.investor'), href: '/investor' },
   ];
 
   return (
-    <header className="bg-white shadow-sm fixed w-full top-0 z-50">
+    <header className="fixed w-full top-0 z-50 bg-white/80 backdrop-blur border-b border-gray-200">
       <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8" aria-label="Top">
-        <div className="flex w-full items-center justify-between border-b border-orange-500 py-6 lg:border-none">
+        <div className="flex w-full items-center justify-between py-5">
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-orange-500 to-red-500">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-900">
                 <span className="text-lg font-bold text-white">J</span>
               </div>
               <div>
@@ -38,9 +36,8 @@ export default function Header() {
               <Link
                 key={item.name}
                 href={item.href}
-                className="flex items-center space-x-2 text-sm font-medium text-gray-700 hover:text-orange-600 transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-orange-50"
+                className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-gray-100"
               >
-                <item.icon className="h-4 w-4" />
                 <span>{item.name}</span>
               </Link>
             ))}
@@ -50,16 +47,15 @@ export default function Header() {
             {/* Language Toggle */}
             <button
               onClick={toggleLanguage}
-              className="flex items-center space-x-1 rounded-md bg-gray-100 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 transition-colors duration-200"
+              className="rounded-full border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-200"
             >
-              <GlobeAltIcon className="h-4 w-4" />
               <span>{language === 'sw' ? 'EN' : 'SW'}</span>
             </button>
 
             {/* Login Button */}
             <Link
               href="/login"
-              className="rounded-md bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 transition-colors duration-200"
+              className="rounded-full bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 transition-colors duration-200"
             >
               {t('nav.login')}
             </Link>
@@ -89,10 +85,9 @@ export default function Header() {
               <Link
                 key={item.name}
                 href={item.href}
-                className="flex items-center space-x-3 rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-orange-600"
+                className="rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                 onClick={() => setIsMenuOpen(false)}
               >
-                <item.icon className="h-5 w-5" />
                 <span>{item.name}</span>
               </Link>
             ))}

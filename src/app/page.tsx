@@ -1,9 +1,7 @@
 import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
 import AboutSection from '@/components/AboutSection';
-import ImpactSection from '@/components/ImpactSection';
-import RegistrationSection from '@/components/RegistrationSection';
-import InvestorSection from '@/components/InvestorSection';
+import JoinCtaSection from '@/components/JoinCtaSection';
 import Footer from '@/components/Footer';
 
 export default function Home() {
@@ -13,9 +11,7 @@ export default function Home() {
       <main>
         <HeroSection />
         <AboutSection />
-        <ImpactSection />
-        <RegistrationSection />
-        <InvestorSection />
+        <JoinCtaSection />
       </main>
       <Footer />
     </div>

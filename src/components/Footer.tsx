@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { MapPinIcon, PhoneIcon, EnvelopeIcon, HomeIcon, InformationCircleIcon, ChartBarIcon, UserPlusIcon, CurrencyDollarIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
+import { MapPinIcon, PhoneIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
 
 export default function Footer() {
   const { t } = useLanguage();
@@ -57,27 +57,23 @@ export default function Footer() {
             <h3 className="text-lg font-semibold">{t('footer.quick_links')}</h3>
             <ul className="space-y-2">
               <li>
-                <a href="#home" className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors duration-200">
-                  <HomeIcon className="h-4 w-4" />
+                <a href="/#home" className="text-gray-300 hover:text-white transition-colors duration-200">
                   <span>{t('nav.home')}</span>
                 </a>
               </li>
               <li>
-                <a href="#about" className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors duration-200">
-                  <InformationCircleIcon className="h-4 w-4" />
+                <a href="/#about" className="text-gray-300 hover:text-white transition-colors duration-200">
                   <span>{t('nav.about')}</span>
                 </a>
               </li>
               <li>
-                <a href="#impact" className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors duration-200">
-                  <ChartBarIcon className="h-4 w-4" />
-                  <span>{t('nav.impact')}</span>
+                <a href="/register" className="text-gray-300 hover:text-white transition-colors duration-200">
+                  <span>{t('nav.join')}</span>
                 </a>
               </li>
               <li>
-                <a href="#join" className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors duration-200">
-                  <UserPlusIcon className="h-4 w-4" />
-                  <span>{t('nav.join')}</span>
+                <a href="/investor" className="text-gray-300 hover:text-white transition-colors duration-200">
+                  <span>{t('nav.investor')}</span>
                 </a>
               </li>
             </ul>
