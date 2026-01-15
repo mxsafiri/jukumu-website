@@ -92,6 +92,8 @@ export default function MemberGroupDetailsPage() {
     return r === 'leader' || r === 'mwenyekiti' || r === 'katibu' || r === 'mwekahazina';
   }, [membership?.role]);
 
+  const recentProposals = useMemo(() => proposals.slice(0, 3), [proposals]);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -247,20 +249,59 @@ export default function MemberGroupDetailsPage() {
 
           <div className="p-4">
             {activeTab === 'overview' && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <p className="text-xs text-gray-500">Monthly Contribution</p>
-                  <p className="text-lg font-semibold text-gray-900">
-                    TSH {Number.parseFloat(String(group?.monthly_contribution || 0)).toLocaleString()}
-                  </p>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <p className="text-xs text-gray-500">Monthly Contribution</p>
+                    <p className="text-lg font-semibold text-gray-900">
+                      TSH {Number.parseFloat(String(group?.monthly_contribution || 0)).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <p className="text-xs text-gray-500">Members</p>
+                    <p className="text-lg font-semibold text-gray-900">{group?.member_count ?? members.length}</p>
+                  </div>
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <p className="text-xs text-gray-500">Leader</p>
+                    <p className="text-lg font-semibold text-gray-900">{group?.leader_name || '—'}</p>
+                  </div>
                 </div>
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <p className="text-xs text-gray-500">Members</p>
-                  <p className="text-lg font-semibold text-gray-900">{group?.member_count ?? members.length}</p>
-                </div>
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <p className="text-xs text-gray-500">Leader</p>
-                  <p className="text-lg font-semibold text-gray-900">{group?.leader_name || '—'}</p>
+
+                <div className="border border-gray-200 rounded-lg p-4 bg-white">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Recent Proposals</p>
+                      <p className="text-sm text-gray-600 mt-1">Visible to all group members.</p>
+                    </div>
+                    <button
+                      onClick={() => setActiveTab('decisions')}
+                      className="text-sm text-orange-700 hover:text-orange-800"
+                    >
+                      View all
+                    </button>
+                  </div>
+
+                  <div className="mt-3 space-y-2">
+                    {recentProposals.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => router.push(`/member-dashboard/groups/${groupId}/proposals/${p.id}`)}
+                        className="w-full text-left border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <p className="text-sm font-semibold text-gray-900">{p.title}</p>
+                            <p className="text-xs text-gray-500 mt-1">Created by: {p.created_by_name || '—'}</p>
+                          </div>
+                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-50 text-gray-800 border border-gray-200">
+                            {String(p.status)}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+
+                    {recentProposals.length === 0 && <p className="text-sm text-gray-600">No proposals yet.</p>}
+                  </div>
                 </div>
               </div>
             )}
@@ -433,7 +474,11 @@ export default function MemberGroupDetailsPage() {
                 </div>
 
                 {proposals.map((p) => (
-                  <div key={p.id} className="border border-gray-200 rounded-lg p-4 bg-white">
+                  <button
+                    key={p.id}
+                    onClick={() => router.push(`/member-dashboard/groups/${groupId}/proposals/${p.id}`)}
+                    className="w-full text-left border border-gray-200 rounded-lg p-4 bg-white hover:bg-gray-50 transition-colors"
+                  >
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <p className="text-sm font-semibold text-gray-900">{p.title}</p>
@@ -444,7 +489,7 @@ export default function MemberGroupDetailsPage() {
                         {String(p.status)}
                       </span>
                     </div>
-                  </div>
+                  </button>
                 ))}
 
                 {proposals.length === 0 && (
