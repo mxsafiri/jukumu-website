@@ -53,7 +53,7 @@ CREATE TABLE group_members (
     group_id INTEGER REFERENCES groups(id),
     member_id INTEGER REFERENCES members(id),
     joined_date DATE DEFAULT CURRENT_DATE,
-    role VARCHAR(50) DEFAULT 'member' CHECK (role IN ('leader', 'member')),
+    role VARCHAR(50) DEFAULT 'member' CHECK (role IN ('leader', 'member', 'mwenyekiti', 'katibu', 'mwekahazina')),
     status VARCHAR(50) DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -77,6 +77,44 @@ CREATE TABLE group_proposal_votes (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(proposal_id, member_id)
+);
+
+CREATE TABLE group_wallets (
+    id SERIAL PRIMARY KEY,
+    group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+    network VARCHAR(50) NOT NULL DEFAULT 'base',
+    cdp_account_name VARCHAR(100) NOT NULL,
+    evm_address VARCHAR(42) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(group_id),
+    UNIQUE(cdp_account_name),
+    UNIQUE(evm_address)
+);
+
+CREATE TABLE group_wallet_transfers (
+    id SERIAL PRIMARY KEY,
+    group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+    wallet_id INTEGER NOT NULL REFERENCES group_wallets(id) ON DELETE CASCADE,
+    proposed_by_member_id INTEGER NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+    token_address VARCHAR(42) NOT NULL,
+    token_symbol VARCHAR(20) NOT NULL,
+    to_address VARCHAR(42) NOT NULL,
+    amount_base_units BIGINT NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'proposed' CHECK (status IN ('proposed', 'approved', 'executed', 'rejected')),
+    approvals_required INTEGER NOT NULL DEFAULT 2,
+    executed_tx_hash VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE group_wallet_transfer_approvals (
+    id SERIAL PRIMARY KEY,
+    transfer_id INTEGER NOT NULL REFERENCES group_wallet_transfers(id) ON DELETE CASCADE,
+    approved_by_member_id INTEGER NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+    approved_by_role VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(transfer_id, approved_by_role)
 );
 
 -- Investments table
@@ -233,6 +271,14 @@ CREATE INDEX idx_group_proposals_group_id ON group_proposals(group_id);
 CREATE INDEX idx_group_proposals_created_at ON group_proposals(created_at DESC);
 CREATE INDEX idx_group_proposal_votes_proposal_id ON group_proposal_votes(proposal_id);
 CREATE INDEX idx_group_proposal_votes_member_id ON group_proposal_votes(member_id);
+CREATE INDEX idx_group_wallets_group_id ON group_wallets(group_id);
+CREATE INDEX idx_group_wallets_evm_address ON group_wallets(evm_address);
+CREATE INDEX idx_group_wallet_transfers_group_id ON group_wallet_transfers(group_id);
+CREATE INDEX idx_group_wallet_transfers_wallet_id ON group_wallet_transfers(wallet_id);
+CREATE INDEX idx_group_wallet_transfers_status ON group_wallet_transfers(status);
+CREATE INDEX idx_group_wallet_transfers_created_at ON group_wallet_transfers(created_at DESC);
+CREATE INDEX idx_group_wallet_transfer_approvals_transfer_id ON group_wallet_transfer_approvals(transfer_id);
+CREATE INDEX idx_group_wallet_transfer_approvals_member_id ON group_wallet_transfer_approvals(approved_by_member_id);
 CREATE INDEX idx_investments_group_id ON investments(group_id);
 CREATE INDEX idx_investments_status ON investments(status);
 CREATE INDEX idx_monthly_contributions_member_id ON monthly_contributions(member_id);

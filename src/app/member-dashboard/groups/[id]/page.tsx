@@ -52,6 +52,56 @@ type ProposalRow = {
   created_by_member_id?: number;
 };
 
+type WalletSummary = {
+  wallet: { id: number; network: string; address: string } | null;
+  balances?: {
+    usdc?: { amountBaseUnits: string; decimals: number };
+    eth?: { amountBaseUnits: string; decimals: number };
+  };
+  recentTransfers?: {
+    id: number;
+    to_address: string;
+    amount_base_units: string | number;
+    status: string;
+    approvals_required: number;
+    executed_tx_hash?: string | null;
+    created_at?: string;
+  }[];
+};
+
+type WalletTransferRow = {
+  id: number;
+  to_address: string;
+  amount_base_units: string | number;
+  status: string;
+  approvals_required: number;
+  approval_count?: number;
+  executed_tx_hash?: string | null;
+  created_at?: string;
+};
+
+function shortAddress(addr?: string | null) {
+  if (!addr) return '—';
+  if (addr.length < 10) return addr;
+  return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+}
+
+function formatBaseUnits(amountBaseUnits: string | number | null | undefined, decimals: number) {
+  const raw = String(amountBaseUnits ?? '0').trim();
+  const digits = raw.replace(/[^0-9]/g, '') || '0';
+  const d = Math.max(0, Number.isFinite(decimals) ? decimals : 0);
+  if (d === 0) return digits;
+
+  const padded = digits.padStart(d + 1, '0');
+  const intPartRaw = padded.slice(0, -d);
+  const fracPartRaw = padded.slice(-d);
+  const fracTrimmed = fracPartRaw.replace(/0+$/, '');
+
+  const intPart = intPartRaw.replace(/^0+(?=\d)/, '');
+  const withCommas = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return fracTrimmed ? `${withCommas}.${fracTrimmed}` : withCommas;
+}
+
 function roleLabel(role?: string) {
   switch (role) {
     case 'leader':
@@ -82,6 +132,18 @@ export default function MemberGroupDetailsPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'members' | 'leadership' | 'decisions'>('overview');
   const [error, setError] = useState<string>('');
 
+  const [walletSummary, setWalletSummary] = useState<WalletSummary | null>(null);
+  const [walletLoading, setWalletLoading] = useState(false);
+  const [walletError, setWalletError] = useState<string>('');
+
+  const [walletTransfers, setWalletTransfers] = useState<WalletTransferRow[]>([]);
+  const [walletTransfersLoading, setWalletTransfersLoading] = useState(false);
+  const [walletTransfersError, setWalletTransfersError] = useState<string>('');
+
+  const [transferToAddress, setTransferToAddress] = useState('');
+  const [transferAmount, setTransferAmount] = useState('');
+  const [transferSubmitting, setTransferSubmitting] = useState(false);
+
   const [showCreateProposal, setShowCreateProposal] = useState(false);
   const [proposalTitle, setProposalTitle] = useState('');
   const [proposalDescription, setProposalDescription] = useState('');
@@ -90,6 +152,16 @@ export default function MemberGroupDetailsPage() {
   const canCreateProposal = useMemo(() => {
     const r = membership?.role;
     return r === 'leader' || r === 'mwenyekiti' || r === 'katibu' || r === 'mwekahazina';
+  }, [membership?.role]);
+
+  const canProposeTransfer = useMemo(() => {
+    const r = membership?.role;
+    return r === 'leader' || r === 'mwenyekiti' || r === 'katibu' || r === 'mwekahazina';
+  }, [membership?.role]);
+
+  const canApproveOrExecuteTransfer = useMemo(() => {
+    const r = membership?.role;
+    return r === 'mwenyekiti' || r === 'katibu' || r === 'mwekahazina';
   }, [membership?.role]);
 
   const recentProposals = useMemo(() => proposals.slice(0, 3), [proposals]);
@@ -105,18 +177,26 @@ export default function MemberGroupDetailsPage() {
     async function load() {
       setLoading(true);
       setError('');
+      setWalletError('');
+      setWalletTransfersError('');
 
       try {
-        const [groupRes, membersRes, leadershipRes, proposalsRes] = await Promise.all([
+        const [groupRes, membersRes, leadershipRes, proposalsRes, walletRes, transfersRes] = await Promise.all([
           fetch(`/api/member/groups/${groupId}`),
           fetch(`/api/member/groups/${groupId}/members`),
           fetch(`/api/member/groups/${groupId}/leadership`),
-          fetch(`/api/member/groups/${groupId}/proposals`)
+          fetch(`/api/member/groups/${groupId}/proposals`),
+          fetch(`/api/member/groups/${groupId}/wallet`),
+          fetch(`/api/member/groups/${groupId}/wallet/transfers`)
         ]);
 
         if (cancelled) return;
 
-        if ([groupRes.status, membersRes.status, leadershipRes.status, proposalsRes.status].includes(401)) {
+        if (
+          [groupRes.status, membersRes.status, leadershipRes.status, proposalsRes.status, walletRes.status, transfersRes.status].includes(
+            401
+          )
+        ) {
           router.push('/login');
           return;
         }
@@ -130,6 +210,8 @@ export default function MemberGroupDetailsPage() {
         const membersJson = await membersRes.json().catch(() => null);
         const leadershipJson = await leadershipRes.json().catch(() => null);
         const proposalsJson = await proposalsRes.json().catch(() => null);
+        const walletJson = await walletRes.json().catch(() => null);
+        const transfersJson = await transfersRes.json().catch(() => null);
 
         if (!groupRes.ok) {
           setError(groupJson?.error || 'Imeshindikana kupakua taarifa za kundi.');
@@ -142,6 +224,20 @@ export default function MemberGroupDetailsPage() {
         setMembers(Array.isArray(membersJson?.members) ? membersJson.members : []);
         setLeadership(Array.isArray(leadershipJson?.leadership) ? leadershipJson.leadership : []);
         setProposals(Array.isArray(proposalsJson?.proposals) ? proposalsJson.proposals : []);
+
+        if (walletRes.ok) {
+          setWalletSummary((walletJson as WalletSummary) || null);
+        } else {
+          setWalletSummary(null);
+          setWalletError(walletJson?.error || 'Imeshindikana kupakua taarifa za wallet.');
+        }
+
+        if (transfersRes.ok) {
+          setWalletTransfers(Array.isArray(transfersJson?.transfers) ? (transfersJson.transfers as WalletTransferRow[]) : []);
+        } else {
+          setWalletTransfers([]);
+          setWalletTransfersError(transfersJson?.error || 'Imeshindikana kupakua transfers za wallet.');
+        }
       } catch (e) {
         if (cancelled) return;
         setError(e instanceof Error ? e.message : 'Imeshindikana kupakua taarifa.');
@@ -265,6 +361,399 @@ export default function MemberGroupDetailsPage() {
                     <p className="text-xs text-gray-500">Leader</p>
                     <p className="text-lg font-semibold text-gray-900">{group?.leader_name || '—'}</p>
                   </div>
+                </div>
+
+                <div className="border border-gray-200 rounded-lg p-4 bg-white">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Group Wallet (USDC)</p>
+                      <p className="text-sm text-gray-600 mt-1">Visible to all group members.</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {walletSummary?.wallet === null && canCreateProposal && (
+                        <button
+                          disabled={walletLoading}
+                          onClick={async () => {
+                            if (!groupId) return;
+                            setWalletLoading(true);
+                            setWalletError('');
+                            try {
+                              const res = await fetch(`/api/member/groups/${groupId}/wallet`, { method: 'POST' });
+                              const json = await res.json().catch(() => null);
+                              if (!res.ok) {
+                                setWalletError(json?.error || 'Imeshindikana kuunda wallet.');
+                                return;
+                              }
+                              const refresh = await fetch(`/api/member/groups/${groupId}/wallet`);
+                              const refreshJson = await refresh.json().catch(() => null);
+                              if (refresh.ok) setWalletSummary((refreshJson as WalletSummary) || null);
+                              else setWalletError(refreshJson?.error || 'Imeshindikana kupakua taarifa za wallet.');
+
+                              const transfers = await fetch(`/api/member/groups/${groupId}/wallet/transfers`);
+                              const transfersJson = await transfers.json().catch(() => null);
+                              if (transfers.ok) {
+                                setWalletTransfers(
+                                  Array.isArray(transfersJson?.transfers) ? (transfersJson.transfers as WalletTransferRow[]) : []
+                                );
+                              }
+                            } catch (err) {
+                              setWalletError(err instanceof Error ? err.message : 'Imeshindikana kuunda wallet.');
+                            } finally {
+                              setWalletLoading(false);
+                            }
+                          }}
+                          className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                            walletLoading
+                              ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                              : 'bg-orange-600 text-white border-orange-600 hover:bg-orange-700'
+                          }`}
+                        >
+                          {walletLoading ? 'Creating...' : 'Create Wallet'}
+                        </button>
+                      )}
+                      {walletSummary?.wallet && (
+                        <button
+                          disabled={walletLoading}
+                          onClick={async () => {
+                            if (!groupId) return;
+                            setWalletLoading(true);
+                            setWalletError('');
+                            try {
+                              const refresh = await fetch(`/api/member/groups/${groupId}/wallet`);
+                              const refreshJson = await refresh.json().catch(() => null);
+                              if (refresh.ok) setWalletSummary((refreshJson as WalletSummary) || null);
+                              else setWalletError(refreshJson?.error || 'Imeshindikana kupakua taarifa za wallet.');
+
+                              const transfers = await fetch(`/api/member/groups/${groupId}/wallet/transfers`);
+                              const transfersJson = await transfers.json().catch(() => null);
+                              if (transfers.ok) {
+                                setWalletTransfers(
+                                  Array.isArray(transfersJson?.transfers) ? (transfersJson.transfers as WalletTransferRow[]) : []
+                                );
+                              }
+                            } catch (err) {
+                              setWalletError(err instanceof Error ? err.message : 'Imeshindikana kupakua taarifa za wallet.');
+                            } finally {
+                              setWalletLoading(false);
+                            }
+                          }}
+                          className="px-3 py-2 rounded-lg text-sm font-medium border bg-white text-gray-700 hover:bg-gray-50"
+                        >
+                          Refresh
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {walletError && (
+                    <div className="mt-3 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                      {walletError}
+                    </div>
+                  )}
+
+                  {walletSummary?.wallet && (
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="border border-gray-200 rounded-lg p-3">
+                        <p className="text-xs text-gray-500">Address</p>
+                        <p className="text-sm font-semibold text-gray-900 mt-1">{shortAddress(walletSummary.wallet.address)}</p>
+                        <p className="text-xs text-gray-500 mt-1">Network: {walletSummary.wallet.network}</p>
+                      </div>
+                      <div className="border border-gray-200 rounded-lg p-3">
+                        <p className="text-xs text-gray-500">USDC Balance</p>
+                        <p className="text-sm font-semibold text-gray-900 mt-1">
+                          {formatBaseUnits(walletSummary.balances?.usdc?.amountBaseUnits, walletSummary.balances?.usdc?.decimals ?? 6)} USDC
+                        </p>
+                      </div>
+                      <div className="border border-gray-200 rounded-lg p-3">
+                        <p className="text-xs text-gray-500">ETH (Gas)</p>
+                        <p className="text-sm font-semibold text-gray-900 mt-1">
+                          {formatBaseUnits(walletSummary.balances?.eth?.amountBaseUnits, walletSummary.balances?.eth?.decimals ?? 18)} ETH
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {walletSummary?.wallet && (
+                    <div className="mt-4">
+                      <p className="text-sm font-medium text-gray-900">Recent Transfers</p>
+                      <div className="mt-2 space-y-2">
+                        {(walletSummary.recentTransfers || []).map((t) => (
+                          <div key={t.id} className="border border-gray-200 rounded-lg p-3">
+                            <div className="flex items-start justify-between gap-4">
+                              <div>
+                                <p className="text-sm font-semibold text-gray-900">
+                                  To: {shortAddress(t.to_address)}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Amount: {formatBaseUnits(t.amount_base_units, 6)} USDC
+                                </p>
+                              </div>
+                              <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-50 text-gray-800 border border-gray-200">
+                                {t.status}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+
+                        {(walletSummary.recentTransfers || []).length === 0 && (
+                          <p className="text-sm text-gray-600">No transfers yet.</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {walletSummary?.wallet && (
+                    <div className="mt-6 border-t border-gray-200 pt-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">Manage Transfers</p>
+                          <p className="text-sm text-gray-600 mt-1">USDC only. Requires 2-of-3 approvals (Mwenyekiti/Katibu/MwekaHazina).</p>
+                        </div>
+                        <button
+                          disabled={walletTransfersLoading}
+                          onClick={async () => {
+                            if (!groupId) return;
+                            setWalletTransfersLoading(true);
+                            setWalletTransfersError('');
+                            try {
+                              const transfers = await fetch(`/api/member/groups/${groupId}/wallet/transfers`);
+                              const transfersJson = await transfers.json().catch(() => null);
+                              if (!transfers.ok) {
+                                setWalletTransfersError(transfersJson?.error || 'Imeshindikana kupakua transfers za wallet.');
+                                return;
+                              }
+                              setWalletTransfers(
+                                Array.isArray(transfersJson?.transfers) ? (transfersJson.transfers as WalletTransferRow[]) : []
+                              );
+                            } catch (err) {
+                              setWalletTransfersError(
+                                err instanceof Error ? err.message : 'Imeshindikana kupakua transfers za wallet.'
+                              );
+                            } finally {
+                              setWalletTransfersLoading(false);
+                            }
+                          }}
+                          className="px-3 py-2 rounded-lg text-sm font-medium border bg-white text-gray-700 hover:bg-gray-50"
+                        >
+                          Refresh
+                        </button>
+                      </div>
+
+                      {walletTransfersError && (
+                        <div className="mt-3 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                          {walletTransfersError}
+                        </div>
+                      )}
+
+                      {canProposeTransfer && (
+                        <form
+                          className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3"
+                          onSubmit={async (e) => {
+                            e.preventDefault();
+                            if (!groupId) return;
+                            if (!walletSummary?.wallet) return;
+
+                            const to = transferToAddress.trim();
+                            const amt = transferAmount.trim();
+                            if (!to || !amt) {
+                              setWalletTransfersError('To address and amount are required.');
+                              return;
+                            }
+
+                            setTransferSubmitting(true);
+                            setWalletTransfersError('');
+                            try {
+                              const res = await fetch(`/api/member/groups/${groupId}/wallet/transfers`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ toAddress: to, amount: amt })
+                              });
+
+                              const json = await res.json().catch(() => null);
+                              if (!res.ok) {
+                                setWalletTransfersError(json?.error || 'Imeshindikana kuanzisha transfer.');
+                                return;
+                              }
+
+                              setTransferToAddress('');
+                              setTransferAmount('');
+
+                              const refresh = await fetch(`/api/member/groups/${groupId}/wallet/transfers`);
+                              const refreshJson = await refresh.json().catch(() => null);
+                              if (refresh.ok) {
+                                setWalletTransfers(
+                                  Array.isArray(refreshJson?.transfers) ? (refreshJson.transfers as WalletTransferRow[]) : []
+                                );
+                              }
+                            } catch (err) {
+                              setWalletTransfersError(err instanceof Error ? err.message : 'Imeshindikana kuanzisha transfer.');
+                            } finally {
+                              setTransferSubmitting(false);
+                            }
+                          }}
+                        >
+                          <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700">To address</label>
+                            <input
+                              value={transferToAddress}
+                              onChange={(e) => setTransferToAddress(e.target.value)}
+                              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                              placeholder="0x..."
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Amount (USDC)</label>
+                            <input
+                              value={transferAmount}
+                              onChange={(e) => setTransferAmount(e.target.value)}
+                              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                              placeholder="e.g. 10.5"
+                            />
+                          </div>
+                          <div className="md:col-span-3 flex items-center gap-2">
+                            <button
+                              type="submit"
+                              disabled={transferSubmitting}
+                              className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                                transferSubmitting
+                                  ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                                  : 'bg-orange-600 text-white border-orange-600 hover:bg-orange-700'
+                              }`}
+                            >
+                              {transferSubmitting ? 'Submitting...' : 'Propose Transfer'}
+                            </button>
+                          </div>
+                        </form>
+                      )}
+
+                      <div className="mt-4 space-y-2">
+                        {walletTransfers.map((t) => (
+                          <div key={t.id} className="border border-gray-200 rounded-lg p-3">
+                            <div className="flex items-start justify-between gap-4">
+                              <div>
+                                <p className="text-sm font-semibold text-gray-900">Transfer #{t.id}</p>
+                                <p className="text-xs text-gray-500 mt-1">To: {shortAddress(t.to_address)}</p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Amount: {formatBaseUnits(t.amount_base_units, 6)} USDC
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Approvals: {t.approval_count ?? 0}/{t.approvals_required}
+                                </p>
+                                {t.executed_tx_hash && (
+                                  <a
+                                    href={`https://basescan.org/tx/${t.executed_tx_hash}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-xs text-orange-700 hover:text-orange-800 mt-1 inline-block"
+                                  >
+                                    View on BaseScan
+                                  </a>
+                                )}
+                              </div>
+                              <div className="flex flex-col items-end gap-2">
+                                <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-50 text-gray-800 border border-gray-200">
+                                  {t.status}
+                                </span>
+
+                                {canApproveOrExecuteTransfer && t.status !== 'executed' && (
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={async () => {
+                                        if (!groupId) return;
+                                        setWalletTransfersLoading(true);
+                                        setWalletTransfersError('');
+                                        try {
+                                          const res = await fetch(
+                                            `/api/member/groups/${groupId}/wallet/transfers/${t.id}/approve`,
+                                            { method: 'POST' }
+                                          );
+                                          const json = await res.json().catch(() => null);
+                                          if (!res.ok) {
+                                            setWalletTransfersError(json?.error || 'Imeshindikana ku-approve transfer.');
+                                            return;
+                                          }
+                                          const refresh = await fetch(`/api/member/groups/${groupId}/wallet/transfers`);
+                                          const refreshJson = await refresh.json().catch(() => null);
+                                          if (refresh.ok) {
+                                            setWalletTransfers(
+                                              Array.isArray(refreshJson?.transfers)
+                                                ? (refreshJson.transfers as WalletTransferRow[])
+                                                : []
+                                            );
+                                          }
+                                        } catch (err) {
+                                          setWalletTransfersError(
+                                            err instanceof Error ? err.message : 'Imeshindikana ku-approve transfer.'
+                                          );
+                                        } finally {
+                                          setWalletTransfersLoading(false);
+                                        }
+                                      }}
+                                      disabled={walletTransfersLoading}
+                                      className="px-3 py-2 rounded-lg text-sm font-medium border bg-white text-gray-700 hover:bg-gray-50"
+                                    >
+                                      Approve
+                                    </button>
+                                    <button
+                                      onClick={async () => {
+                                        if (!groupId) return;
+                                        setWalletTransfersLoading(true);
+                                        setWalletTransfersError('');
+                                        try {
+                                          const res = await fetch(
+                                            `/api/member/groups/${groupId}/wallet/transfers/${t.id}/execute`,
+                                            { method: 'POST' }
+                                          );
+                                          const json = await res.json().catch(() => null);
+                                          if (!res.ok) {
+                                            setWalletTransfersError(json?.error || 'Imeshindikana ku-execute transfer.');
+                                            return;
+                                          }
+                                          const refreshWallet = await fetch(`/api/member/groups/${groupId}/wallet`);
+                                          const refreshWalletJson = await refreshWallet.json().catch(() => null);
+                                          if (refreshWallet.ok) setWalletSummary((refreshWalletJson as WalletSummary) || null);
+
+                                          const refresh = await fetch(`/api/member/groups/${groupId}/wallet/transfers`);
+                                          const refreshJson = await refresh.json().catch(() => null);
+                                          if (refresh.ok) {
+                                            setWalletTransfers(
+                                              Array.isArray(refreshJson?.transfers)
+                                                ? (refreshJson.transfers as WalletTransferRow[])
+                                                : []
+                                            );
+                                          }
+                                        } catch (err) {
+                                          setWalletTransfersError(
+                                            err instanceof Error ? err.message : 'Imeshindikana ku-execute transfer.'
+                                          );
+                                        } finally {
+                                          setWalletTransfersLoading(false);
+                                        }
+                                      }}
+                                      disabled={walletTransfersLoading}
+                                      className="px-3 py-2 rounded-lg text-sm font-medium border bg-orange-600 text-white border-orange-600 hover:bg-orange-700"
+                                    >
+                                      Execute
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+
+                        {walletTransfers.length === 0 && (
+                          <p className="text-sm text-gray-600">No transfer proposals yet.</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {walletSummary?.wallet === null && !walletLoading && !walletError && (
+                    <div className="mt-3">
+                      <p className="text-sm text-gray-600">No wallet created yet.</p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="border border-gray-200 rounded-lg p-4 bg-white">
