@@ -63,7 +63,14 @@ database/
 └── schema.sql          # PostgreSQL database schema
 ```
 
-## 🚦 Getting Started
+## � Documentation
+
+- **Platform overview**: `Docs/OVERVIEW.md`
+- **Contributor guide**: `Docs/CONTRIBUTORS.md`
+- **Admin guide**: `Docs/ADMINS.md`
+- **User guide**: `Docs/USERS.md`
+
+## �🚦 Getting Started
 
 ### Prerequisites
 - Node.js 18+ 
